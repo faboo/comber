@@ -1,0 +1,26 @@
+[project]
+name = "comber"
+version = "0.0.1"
+description = "Parser combinator library with a BNF-esque interface"
+requires-python = ">=3.10"
+readme = "README.rst"
+license = {file = "LICENSE.txt"}
+dependencies = [
+]
+
+[project.scripts]
+
+
+[tool.setuptools]
+
+[tool.pytest.ini_options]
+addopts = "--cov --cov-report term-missing"
+
+[tool.coverage.run]
+source = ["src"]
+
+[build-system]
+requires = ["setuptools>=43.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+
