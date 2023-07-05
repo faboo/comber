@@ -1,6 +1,6 @@
 docker/
 ?env/
-*.egg-info/*
+*.egg-info/
 html/
 doctrees/
 .mypy_cache/
