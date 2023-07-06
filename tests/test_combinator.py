@@ -1,10 +1,18 @@
 import pytest
-from comber import C, Id, Lit, Seq, Choice, Repeat, inf
+from comber import C, Id, Lit, Seq, Choice, Repeat, inf, EndOfInputError
 
 def test_wrap():
     parser = C('foo')
 
     assert Id(Lit('foo')) == parser
+
+
+def test_eof():
+    parser = C('foo')
+
+    with pytest.raises(EndOfInputError):
+        parser.parse('')
+
 
 def test_seq():
     parser = C + 'foo' + 'bar'

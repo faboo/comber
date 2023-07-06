@@ -103,6 +103,12 @@ class ParseError(Exception):
         self.expected = expected
 
 
+class EndOfInputError(ParseError):
+    """
+    When we reach the end of input before completing a full parse.
+    """
+
+
 Intern = Callable[[List[Any]], Any]
 """
 Type of internalizer functions.
@@ -136,7 +142,10 @@ class Parser:
         newState = self.recognize(state)
 
         if newState is None:
-            raise ParseError(state, self.expectCore())
+            if state.eof:
+                raise EndOfInputError(state, self.expectCore())
+            else:
+                raise ParseError(state, self.expectCore())
 
         if self.intern is not None:
             value = self.intern(newState.popBranch())
