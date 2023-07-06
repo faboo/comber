@@ -5,6 +5,7 @@ html/
 doctrees/
 .mypy_cache/
 build/
+.tox/
 *.swp
 *.swo
 *.log
