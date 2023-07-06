@@ -8,7 +8,7 @@ Comber is a parser combinator library that allows the creation of parsers in pla
     from comboer import C, cs, rs, inf
     
     sp = cs(' \t\n')[0, inf]
-    keyword = rs(r'[_a-zA-Z][_a-zA-Z0-9]*')
+    keyword = rs(r'[_a-zA-Z][_a-zA-Z0-9]*')@('keyword')
     import_statement = C + 'import' + sp + keyword
 
 
@@ -28,6 +28,7 @@ Operator  Method          Current use
 ========  ==============  =====
 +         __add__         sequences
 |         __or__          selection
+[ ]       __getitem__     repeat
 @         __matmul__      names and internalization
 <         __lt__
 >         __gt__
@@ -48,7 +49,6 @@ is not    is_not
 <<        __lshift__
 >>        __rshift__
 in        __contains__
-[ ]       __getitem__
 
 
 Unary operators:
@@ -56,8 +56,8 @@ Unary operators:
 ========  ===========  =====
 Operator  Method       Current use
 ========  ===========  =====
+~         __invert__   optional
 not       __not__
-~         __invert__
 -         __neg__
 +         __pos__
 

@@ -15,7 +15,9 @@ def test_expect():
 
 def test_parse():
     parser = Seq('foo', 'bar')
-    parser.parse('foobar')
+    state = parser.parse('foobar')
+    assert state.text == ''
+    assert state.tree == ['foo', 'bar']
 
     with pytest.raises(ParseError):
         parser.parse('foo')

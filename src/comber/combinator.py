@@ -3,7 +3,7 @@ Combinator definitions.
 """
 from typing import Optional, Tuple, List, Union, Any
 from abc import ABC
-from .parser import Parser, State, Intern
+from .parser import Parser, State, Intern, ParseError
 
 Parseable = Union['Combinator', str]
 
@@ -11,7 +11,6 @@ class Combinator(Parser, ABC):
     """
     Combinator definitions.
     """
-
     def __matmul__(self, arg:Union[str, Tuple[str, Intern]]) -> 'Combinator':
         if isinstance(arg, str):
             self.name = arg
@@ -31,6 +30,14 @@ class Combinator(Parser, ABC):
     def __or__(self, right:Parseable) -> Parseable:
         return Choice(self, right)
 
+    def __getitem__(self, args:Union[int,Tuple[int,int]]) -> 'Combinator':
+        minimum = args if isinstance(args, int) else args[0]
+        maximum = None if isinstance(args, int) else args[1]
+        return Repeat(self, minimum, maximum)
+
+    def __invert__(self) -> 'Combinator':
+        return Repeat(self, 0, 1)
+
 
 class Lit(Combinator):
     """
@@ -43,11 +50,12 @@ class Lit(Combinator):
     def expect(self) -> List[str]:
         return [self.string]
 
-    def parseString(self, state:State) -> Optional[State]:
+    def recognize(self, state:State) -> Optional[State]:
         if not state.text.startswith(self.string):
             return None
 
-        return state.consume(len(self.string))
+        state.consume(len(self.string))
+        return state
 
     def __eq__(self, right:Any) -> bool:
         return isinstance(right, Lit) and right.string == self.string
@@ -73,7 +81,7 @@ class Seq(Combinator):
     """
     A sequence of parsers.
     """
-    def __init__(self, left:Parseable, right:Parseable) -> None:
+    def __init__(self, left:Combinator, right:Parseable) -> None:
         super().__init__()
         self.subparsers:List[Combinator] = left.subparsers \
             if isinstance(left, Seq) \
@@ -82,14 +90,11 @@ class Seq(Combinator):
         self.subparsers.append(asCombinator(right))
 
     def expect(self) -> List[str]:
-        return self.subparsers[0].expect()
+        return self.subparsers[0].expectCore()
 
-    def parseString(self, state:State) -> Optional[State]:
+    def recognize(self, state:State) -> Optional[State]:
         for parser in self.subparsers:
-            newState = parser.parseBase(state)
-            if not newState:
-                return None
-            state = newState
+            state = parser.parseCore(state)
 
         return state
 
@@ -111,7 +116,7 @@ class Choice(Combinator):
     """
     Parse as the first successful parse.
     """
-    def __init__(self, left:Parseable, right:Parseable) -> None:
+    def __init__(self, left:Combinator, right:Parseable) -> None:
         super().__init__()
         self.subparsers:List[Combinator] = left.subparsers \
             if isinstance(left, Choice) \
@@ -123,15 +128,17 @@ class Choice(Combinator):
         return \
             [ string
               for subparser in self.subparsers
-              for string in subparser.expect()
+              for string in subparser.expectCore()
             ]
 
-    def parseString(self, state:State) -> Optional[State]:
+    def recognize(self, state:State) -> Optional[State]:
         for parser in self.subparsers:
-            newState = parser.parseBase(state)
-
-            if newState:
-                return newState
+            try:
+                trialState = state.pushState()
+                trialState = parser.parseCore(trialState)
+                return trialState.popState()
+            except ParseError:
+                continue
 
         return None
 
@@ -149,6 +156,54 @@ class Choice(Combinator):
         return f'Choice({self.subparsers})'
 
 
+class Repeat(Combinator):
+    """
+    Repeat a combinator.
+    """
+    def __init__(self, subparser:Combinator, minimum:int, maximum:Optional[int]) -> None:
+        super().__init__()
+        self.subparser = subparser
+        self.minimum = minimum
+        self.maximum = maximum
+
+    def expect(self) -> List[str]:
+        return self.subparser.expectCore()
+
+    def recognize(self, state:State) -> Optional[State]:
+        parsed = 0
+
+        while parsed < self.minimum:
+            state = self.subparser.parseCore(state)
+            parsed += 1
+
+        if parsed < self.minimum:
+            return None
+
+        if self.maximum is not None:
+            while parsed < self.maximum:
+                try:
+                    trialState = state.pushState()
+                    trialState = self.subparser.parseCore(trialState)
+                    state = trialState.popState()
+                    parsed += 1
+                except ParseError:
+                    break
+
+        return state
+
+    def __eq__(self, right:Any) -> bool:
+        return isinstance(right, Repeat) \
+            and right.subparser == self.subparser \
+            and right.minimum == self.minimum \
+            and right.maximum == self.maximum
+
+    def __hash__(self) -> int:
+        return hash(hash(self.subparser)+hash(self.minimum)+hash(self.maximum))
+
+    def __repr__(self) -> str:
+        return f'Repeat({self.subparser}, {self.minimum}, {self.maximum})'
+
+
 class Id(Combinator):
     """
     Parse exactly the subparser.
@@ -159,11 +214,11 @@ class Id(Combinator):
 
 
     def expect(self) -> List[str]:
-        return self.subparser.expect()
+        return self.subparser.expectCore()
 
 
-    def parseString(self, state:State) -> Optional[State]:
-        return self.subparser.parseBase(state)
+    def recognize(self, state:State) -> Optional[State]:
+        return self.subparser.parseCore(state)
 
     def __eq__(self, right:Any) -> bool:
         return isinstance(right, Id) and right.subparser == self.subparser
@@ -182,7 +237,7 @@ class CClass(Combinator):
     def expect(self) -> List[str]:
         return []
 
-    def parseString(self, state:State) -> Optional[State]:
+    def recognize(self, state:State) -> Optional[State]:
         return state
 
     def __call__(self, *args:Parseable) -> Id:

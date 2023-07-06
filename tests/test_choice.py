@@ -15,8 +15,13 @@ def test_expect():
 
 def test_parse():
     parser = Choice('foo', 'bar')
-    parser.parse('foo')
-    parser.parse('bar')
+    state = parser.parse('foo')
+    assert state.text == ''
+    assert state.tree == ['foo']
+
+    state = parser.parse('bar')
+    assert state.text == ''
+    assert state.tree == ['bar']
 
     with pytest.raises(ParseError):
         parser.parse('baz')
