@@ -2,17 +2,17 @@ import pytest
 from comber import Repeat, Lit, ParseError, inf
 
 def test_create():
-    parser = Repeat(Lit('foo'), 0, 1)
+    parser = Repeat(Lit('foo'), 0, 1, None)
     assert Lit('foo') == parser.subparser
     assert 0 == parser.minimum
     assert 1 == parser.maximum
 
 def test_expect():
-    parser = Repeat(Lit('foo'), 0, 1)
+    parser = Repeat(Lit('foo'), 0, 1, None)
     assert ['foo'] == parser.expect()
 
 def test_parse_exact():
-    parser = Repeat(Lit('foo'), 2, None)
+    parser = Repeat(Lit('foo'), 2, None, None)
     state = parser.parse('foofoo')
     assert state.text == ''
     assert state.tree == ['foo', 'foo']
@@ -21,7 +21,7 @@ def test_parse_exact():
         parser.parse('foo')
 
 def test_parse_optional():
-    parser = Repeat(Lit('foo'), 0, 1)
+    parser = Repeat(Lit('foo'), 0, 1, None)
     state = parser.parse('foo')
     assert state.text == ''
     assert state.tree == ['foo']
@@ -30,7 +30,7 @@ def test_parse_optional():
     assert state.tree == []
 
 def test_parse_with_max():
-    parser = Repeat(Lit('foo'), 1, 2)
+    parser = Repeat(Lit('foo'), 1, 2, None)
     state = parser.parse('foo')
     assert state.text == ''
     assert state.tree == ['foo']
@@ -51,7 +51,7 @@ def test_parse_with_max():
         parser.parse('')
 
 def test_parse_inf():
-    parser = Repeat(Lit('foo'), 0, inf)
+    parser = Repeat(Lit('foo'), 0, inf, None)
     state = parser.parse('foo')
     assert state.text == ''
     assert state.tree == ['foo']

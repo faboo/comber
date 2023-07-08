@@ -33,6 +33,10 @@ def test_name():
     assert parser.name == 'baz'
     assert parser.expectCore() == ['baz']
 
+    parser = (C('foo') | 'bar')@('baz')
+    assert parser.name == 'baz'
+    assert parser.expectCore() == ['baz']
+
 def test_intern():
     class Eval:
         def __init__(self, args):
@@ -46,14 +50,14 @@ def test_intern():
 
 def test_optional():
     parser = ~Lit('foo')
-    assert Repeat(Lit('foo'), 0, 1) == parser
+    assert Repeat(Lit('foo'), 0, 1, None) == parser
 
 def test_repeat():
     parser = Lit('foo')[1]
-    assert Repeat(Lit('foo'), 1, None) == parser
+    assert Repeat(Lit('foo'), 1, None, None) == parser
 
     parser = Lit('foo')[1, 3]
-    assert Repeat(Lit('foo'), 1, 3) == parser
+    assert Repeat(Lit('foo'), 1, 3, None) == parser
 
     parser = Lit('foo')[1, inf]
-    assert Repeat(Lit('foo'), 1, inf) == parser
+    assert Repeat(Lit('foo'), 1, inf, None) == parser

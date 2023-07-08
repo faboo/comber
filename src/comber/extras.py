@@ -1,8 +1,12 @@
+"""
+Additional non-core parsers.
+"""
 from typing import Iterable, List, Optional, Any
 import re
 from .parser import State
-from .combinator import Combinator
+from .combinator import Combinator, asCombinator
 
+#pylint: disable=invalid-name
 class cs(Combinator):
     """
     Parse one of a list of strings, or one of a character in a string.
@@ -32,6 +36,7 @@ class cs(Combinator):
         return f'cs({self.string})'
 
 
+#pylint: disable=invalid-name
 class rs(Combinator):
     """
     Parse using a regular expression
@@ -62,3 +67,50 @@ class rs(Combinator):
 
     def __repr__(self) -> str:
         return f'rs({self.raw})'
+
+
+#pylint: disable=invalid-name
+class delayed(Combinator):
+    """
+    A placeholder parser that can be filled in later with another parser.
+    Useful for recusive definitions.
+    """
+    def __init__(self) -> None:
+        super().__init__()
+        self._subparser:Optional[Combinator] = None
+
+    @property
+    def subparser(self) -> Combinator:
+        """
+        The parser this delayed parser is the stand-in for.
+        """
+        if self._subparser is None:
+            message = 'Unfulfilled delay parser'
+            if self.name:
+                message += f' ({self.name})'
+            #pylint: disable=broad-exception-raised
+            raise Exception(message)
+
+        return self._subparser
+
+    def fill(self, subparser:Combinator) -> None:
+        """
+        Fill in the parser for this delayed parser.
+        """
+        self._subparser = asCombinator(subparser)
+
+    def expect(self) -> List[str]:
+        return self.subparser.expect()
+
+    def recognize(self, state:State) -> Optional[State]:
+        return self.subparser.recognize(state)
+
+    def __eq__(self, right:Any) -> bool:
+        return isinstance(right, delayed) and right._subparser == self._subparser
+
+    def __hash__(self) -> int:
+        return hash(self._subparser)
+
+    def __repr__(self) -> str:
+        return f'delayed({self._subparser})'
+

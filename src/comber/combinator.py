@@ -1,7 +1,7 @@
 """
 Combinator definitions.
 """
-from typing import Optional, Tuple, List, Union, Any
+from typing import cast, Optional, Tuple, List, Union, Any
 from abc import ABC
 from .parser import Parser, State, Intern, ParseError
 
@@ -30,13 +30,14 @@ class Combinator(Parser, ABC):
     def __or__(self, right:Parseable) -> Parseable:
         return Choice(self, right)
 
-    def __getitem__(self, args:Union[int,Tuple[int,int]]) -> 'Combinator':
+    def __getitem__(self, args:Union[int,Tuple[int,int],Tuple[int,int,Parseable]]) -> 'Combinator':
         minimum = args if isinstance(args, int) else args[0]
         maximum = None if isinstance(args, int) else args[1]
-        return Repeat(self, minimum, maximum)
+        separator = None if isinstance(args, int) or len(args) < 3 else cast(Tuple[int,int,Parseable], args)[2]
+        return Repeat(self, minimum, maximum, separator)
 
     def __invert__(self) -> 'Combinator':
-        return Repeat(self, 0, 1)
+        return Repeat(self, 0, 1, None)
 
 
 class Lit(Combinator):
@@ -160,11 +161,12 @@ class Repeat(Combinator):
     """
     Repeat a combinator.
     """
-    def __init__(self, subparser:Combinator, minimum:int, maximum:Optional[int]) -> None:
+    def __init__(self, subparser:Combinator, minimum:int, maximum:Optional[int], separator:Optional[Parseable]) -> None:
         super().__init__()
         self.subparser = subparser
         self.minimum = minimum
         self.maximum = maximum
+        self.separator = None if separator is None else asCombinator(separator)
 
     def expect(self) -> List[str]:
         return self.subparser.expectCore()
@@ -173,6 +175,8 @@ class Repeat(Combinator):
         parsed = 0
 
         while parsed < self.minimum:
+            if parsed > 0 and self.separator:
+                state = self.separator.parseCore(state)
             state = self.subparser.parseCore(state)
             parsed += 1
 
@@ -183,6 +187,10 @@ class Repeat(Combinator):
             while parsed < self.maximum:
                 try:
                     trialState = state.pushState()
+
+                    if parsed > 0 and self.separator:
+                        trialState = self.separator.parseCore(trialState)
+
                     trialState = self.subparser.parseCore(trialState)
                     state = trialState.popState()
                     parsed += 1

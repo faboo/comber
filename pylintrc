@@ -417,6 +417,7 @@ disable=raw-checker-failed,
         deprecated-pragma,
         use-symbolic-message-instead,
         no-else-return,
+        no-else-raise,
         trailing-newlines,
         too-few-public-methods
 
