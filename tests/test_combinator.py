@@ -61,3 +61,9 @@ def test_repeat():
 
     parser = Lit('foo')[1, inf]
     assert Repeat(Lit('foo'), 1, inf, None) == parser
+
+def test_space_eating():
+    parser = C+ 'foo' + 'bar'
+    state = parser.parse('foo bar')
+    assert state.text == ''
+    assert state.tree == ['foo', 'bar']

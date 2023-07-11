@@ -103,7 +103,7 @@ class delayed(Combinator):
         return self.subparser.expect()
 
     def recognize(self, state:State) -> Optional[State]:
-        return self.subparser.recognize(state)
+        return self.subparser.parseCore(state)
 
     def __eq__(self, right:Any) -> bool:
         return isinstance(right, delayed) and right._subparser == self._subparser

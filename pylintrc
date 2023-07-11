@@ -419,6 +419,7 @@ disable=raw-checker-failed,
         no-else-return,
         no-else-raise,
         trailing-newlines,
+        trailing-whitespace,
         too-few-public-methods
 
 # Enable the message, report, category or checker with the given id(s). You can

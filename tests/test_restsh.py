@@ -1,15 +1,16 @@
+import pytest
 from comber import C, rs, delayed, inf
 
-
-def test_restsh():
+@pytest.fixture
+def grammar():
     string = rs(r'"(\\"|[^"])*"')@('string')
     integer = rs(r'[+-]?[0-9]+')@('integer')
     floating = rs(r'[+-]?[0-9]+\.[0-9]+')@('float')
     symbol = rs(r'[_a-zA-Z][_a-zA-Z0-9]*')@('symbol')
     operator = rs(r'[-+*/|&^$@?~=<>]+')@('operator')
 
-    expression = delayed()
-    constant = string | integer | floating
+    expression = delayed()@('expression')
+    constant = string | floating | integer
     boolean = C+ '!' + expression
     variable = symbol
     objectRef = expression + '.' + symbol
@@ -28,26 +29,59 @@ def test_restsh():
     describe = C+ 'help' + ~expression
     ext = C+ 'exit'
     imprt = C+ 'import' + symbol
-    assignment = lvalue + '=' + rvalue
+    assignment = (lvalue + '=' + rvalue)@('assignment')
     block = expression[1, inf, ';']
 
     expression.fill(
-        variable |
-        array |
+        # No start symbol
+        block |
+        opcall |
+        subscript | 
+        call |
+        objectRef |
+
+        # Start symbol
         dictObject |
-        constant |
         closure |
+        array |
+        constant |
         boolean |
         tryex |
         ifthen |
-        subscript | 
-        call |
-        opcall |
         group |
-        block |
-        objectRef)
+        variable)
     
-    statement = describe | ext | imprt | define | assignment | expression
+    statement = describe | ext | imprt | assignment | define | expression
+    
+    return statement
 
 
+def test_expect(grammar):
+    assert grammar.expect() == ['help', 'exit', 'import', 'assignment', 'let', 'expression']
+
+
+def test_parse(grammar):
+    #state = grammar.parse('import foo')
+    #assert state.text == ''
+    #assert state.tree == ['import', 'foo']
+
+    #state = grammar.parse('let foo')
+    #assert state.text == ''
+    #assert state.tree == ['let', 'foo']
+
+    state = grammar.parse('12')
+    assert state.text == ''
+    assert state.tree == ['12']
+
+    #state = grammar.parse('let foo = 12')
+    #assert state.text == ''
+    #assert state.tree == ['let', 'foo', '=', '12']
+
+    #state = grammar.parse('["foo", true, -3, 3.14]')
+    #assert state.text == ''
+    #assert state.tree == ['[', '"foo"', ',', 'true', ',', '-3', ',', '3.14', ']']
+    #
+    #state = grammar.parse('funcs.foo(arg: "baz")')
+    #assert state.text == ''
+    #assert state.tree == ['funcs', '.', 'foo', '(', 'arg', ':', '"baz"', ')']
 

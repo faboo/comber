@@ -82,11 +82,16 @@ class Seq(Combinator):
     """
     A sequence of parsers.
     """
-    def __init__(self, left:Combinator, right:Parseable) -> None:
+    def __init__(self, left:Parseable, right:Parseable) -> None:
         super().__init__()
-        self.subparsers:List[Combinator] = left.subparsers \
-            if isinstance(left, Seq) \
-            else [asCombinator(left)]
+        self.subparsers:List[Combinator]
+
+        if isinstance(left, Seq):
+            self.subparsers = left.subparsers
+        else:
+            self.subparsers = []
+            if left is not C:
+                self.subparsers.append(asCombinator(left))
 
         self.subparsers.append(asCombinator(right))
 
@@ -117,11 +122,16 @@ class Choice(Combinator):
     """
     Parse as the first successful parse.
     """
-    def __init__(self, left:Combinator, right:Parseable) -> None:
+    def __init__(self, left:Parseable, right:Parseable) -> None:
         super().__init__()
-        self.subparsers:List[Combinator] = left.subparsers \
-            if isinstance(left, Choice) \
-            else [asCombinator(left)]
+        self.subparsers:List[Combinator]
+
+        if isinstance(left, Choice):
+            self.subparsers = left.subparsers
+        else:
+            self.subparsers = []
+            if left is not C:
+                self.subparsers.append(asCombinator(left))
 
         self.subparsers.append(asCombinator(right))
 
@@ -248,8 +258,8 @@ class CClass(Combinator):
     def recognize(self, state:State) -> Optional[State]:
         return state
 
-    def __call__(self, *args:Parseable) -> Id:
-        return Id(args[0])
+    def __call__(self, arg:Parseable) -> Id:
+        return Id(arg)
 
     def __repr__(self) -> str:
         return 'C'

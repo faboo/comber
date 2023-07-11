@@ -16,7 +16,7 @@ def test_parse():
     assert state.text == ''
     assert state.tree == ['foo']
     state = parser.parse('foo 123')
-    assert state.text == ' 123'
+    assert state.text == '123'
     assert state.tree == ['foo']
 
     with pytest.raises(ParseError):
