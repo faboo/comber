@@ -32,7 +32,7 @@ class cs(Combinator):
     def __hash__(self) -> int:
         return hash(self.string)
 
-    def __repr__(self) -> str:
+    def repr(self) -> str:
         return f'cs({self.string})'
 
 
@@ -65,7 +65,7 @@ class rs(Combinator):
     def __hash__(self) -> int:
         return hash(self.raw)
 
-    def __repr__(self) -> str:
+    def repr(self) -> str:
         return f'rs({self.raw})'
 
 
@@ -111,6 +111,6 @@ class delayed(Combinator):
     def __hash__(self) -> int:
         return hash(self._subparser)
 
-    def __repr__(self) -> str:
+    def repr(self) -> str:
         return f'delayed({self._subparser})'
 

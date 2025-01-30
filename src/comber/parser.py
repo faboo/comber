@@ -17,7 +17,7 @@ class State:
         self.line = 1
         self.char = 1
         self._tree:list = [[]]
-        self._recurseStack = set()
+        self._recurseStack:list = [[]]
         self._whitespace = whitespace
 
         self.eatWhite()
@@ -45,10 +45,7 @@ class State:
             lines = self.text[0:len(text)].split('\n')
             self.text = text
             self.line += len(lines) - 1
-            if lines:
-                self.char = len(lines[-1]) + 1
-            else:
-                self.char += len(lines[0])
+            self.char = len(lines[-1]) + 1
 
     def consume(self, length:int) -> None:
         """
@@ -60,10 +57,7 @@ class State:
         self.line += len(lines) - 1
         self.text = self.text[length:]
 
-        if lines:
-            self.char = len(lines[-1]) + 1
-        else:
-            self.char += len(lines[0])
+        self.char = len(lines[-1]) + 1
 
         self._tree[-1].append(text)
 
@@ -97,6 +91,7 @@ class State:
         state.char = self.char
         #pylint: disable=protected-access
         state._tree = list(self._tree)
+        state._recurseStack = list(self._recurseStack)
         state.pushBranch()
 
         return state
@@ -108,6 +103,38 @@ class State:
         popped = self.popBranch()
         self._tree[-1] += popped
         return self
+
+    def pushParser(self, parser:Any) -> None:
+        """
+        Push the current parser.
+        """
+        logging.info('pushing parser: %s', parser)
+        self._recurseStack[-1].append(parser)
+
+    def popParser(self) -> None:
+        """
+        Pop the last parser.
+        """
+        logging.info('popping parser: %s', len(self._recurseStack[-1]))
+        self._recurseStack[-1].pop()
+
+    def shiftParser(self) -> None:
+        """
+        Create a new parser stack because we're looking for the element in a sequence
+        """
+        self._recurseStack.append([])
+
+    def unshiftParser(self) -> None:
+        """
+        Toss out the current parser stack.
+        """
+        self._recurseStack.pop()
+
+    def inRecursion(self, parser:Any) -> bool:
+        """
+        See if we're already trying to parse a given parser.
+        """
+        return parser in self._recurseStack[-1]
 
 
 class ParseError(Exception):
@@ -130,6 +157,11 @@ class ParseError(Exception):
 class EndOfInputError(ParseError):
     """
     When we reach the end of input before completing a full parse.
+    """
+
+class ShiftShiftConflict(ParseError):
+    """
+    When we encounter a shift-shift conflict
     """
 
 class ShiftReduceConflict(ParseError):
@@ -166,14 +198,19 @@ class Parser:
         """
         Internal parse function, for call on subparsers.
         """
-        if self.inStack(state):
-            ShiftShiftError(state, self.expectCore())
+        if state.inRecursion(self):
+            raise ShiftShiftConflict(state, self.expectCore())
         if self.intern:
             state.pushBranch()
 
-        logging.info('parseCore %s (%s)', self.__class__.__name__, self.name)
-        logging.info('tree depth: %s', len(state._tree))
-        newState = self.recognize(state)
+        logging.info('parseCore %s (%s)', self, self.name)
+        state.pushParser(self)
+        logging.info('recurse: %s', state._recurseStack) #pylint: disable=protected-access
+        try:
+            newState = self.recognize(state)
+        finally:
+            logging.info('Finally pop state')
+            state.popParser()
         logging.info('    newState: %s', newState)
 
         if newState is None:
@@ -181,6 +218,12 @@ class Parser:
                 raise EndOfInputError(state, self.expectCore())
             else:
                 raise ParseError(state, self.expectCore())
+
+        #if newState != state:
+            #logging.info('Popping for new state: %s <> %s', newState, state)
+            #newState.popParser()
+
+        logging.info('recurse after: %s', state._recurseStack) #pylint: disable=protected-access
 
         if self.intern is not None:
             value = self.intern(newState.popBranch())
@@ -194,6 +237,14 @@ class Parser:
         If this parser has a name, then a list containing only its name, otherwise the value returned by expect
         """
         return [self.name] if self.name else self.expect()
+
+    def __repr__(self) -> str:
+        """
+        A string representation of the combinator
+        """
+        if self.name:
+            return f"@{self.name}"
+        return self.repr()
 
 
     @abstractmethod
@@ -209,3 +260,8 @@ class Parser:
         Core parse function of a parser.
         """
 
+    @abstractmethod
+    def repr(self) -> str:
+        """
+        The specific combinator string represenation.
+        """

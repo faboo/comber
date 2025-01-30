@@ -37,6 +37,9 @@ def test_name():
     assert parser.name == 'baz'
     assert parser.expectCore() == ['baz']
 
+    with pytest.raises(TypeError):
+        C('foo')@12
+
 def test_intern():
     class Eval:
         def __init__(self, args):

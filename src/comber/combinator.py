@@ -1,6 +1,7 @@
 """
 Combinator definitions.
 """
+import logging
 from typing import cast, Optional, Tuple, List, Union, Any
 from abc import ABC
 from .parser import Parser, State, Intern, ParseError
@@ -52,6 +53,7 @@ class Lit(Combinator):
         return [self.string]
 
     def recognize(self, state:State) -> Optional[State]:
+        logging.info('self.string: %s ~ %s', self.string, state.text)
         if not state.text.startswith(self.string):
             return None
 
@@ -64,7 +66,7 @@ class Lit(Combinator):
     def __hash__(self) -> int:
         return hash(self.string)
 
-    def __repr__(self) -> str:
+    def repr(self) -> str:
         return f'Lit({self.string})'
 
 
@@ -99,8 +101,16 @@ class Seq(Combinator):
         return self.subparsers[0].expectCore()
 
     def recognize(self, state:State) -> Optional[State]:
+        logging.info('SEQUENCE?')
         for parser in self.subparsers:
-            state = parser.parseCore(state)
+            try:
+                state.shiftParser()
+                #state.pushParser(parser)
+                logging.info('  parser: %s, text: %s', parser, state.text)
+                state = parser.parseCore(state)
+                logging.info('  text: %s', state.text)
+            finally:
+                state.unshiftParser()
 
         return state
 
@@ -114,7 +124,7 @@ class Seq(Combinator):
     def __hash__(self) -> int:
         return hash(self.subparsers)
 
-    def __repr__(self) -> str:
+    def repr(self) -> str:
         return f'Seq({self.subparsers})'
 
 
@@ -163,7 +173,7 @@ class Choice(Combinator):
     def __hash__(self) -> int:
         return hash(self.subparsers)
 
-    def __repr__(self) -> str:
+    def repr(self) -> str:
         return f'Choice({self.subparsers})'
 
 
@@ -218,7 +228,7 @@ class Repeat(Combinator):
     def __hash__(self) -> int:
         return hash(hash(self.subparser)+hash(self.minimum)+hash(self.maximum))
 
-    def __repr__(self) -> str:
+    def repr(self) -> str:
         return f'Repeat({self.subparser}, {self.minimum}, {self.maximum})'
 
 
@@ -244,7 +254,7 @@ class Id(Combinator):
     def __hash__(self) -> int:
         return hash(self.subparser)
 
-    def __repr__(self) -> str:
+    def repr(self) -> str:
         return f'Id({self.subparser})'
 
 
@@ -261,7 +271,7 @@ class CClass(Combinator):
     def __call__(self, arg:Parseable) -> Id:
         return Id(arg)
 
-    def __repr__(self) -> str:
+    def repr(self) -> str:
         return 'C'
 
 

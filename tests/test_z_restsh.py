@@ -60,28 +60,33 @@ def test_expect(grammar):
     assert grammar.expect() == ['help', 'exit', 'import', 'assignment', 'let', 'expression']
 
 
-def test_parse(grammar):
-    #state = grammar.parse('import foo')
-    #assert state.text == ''
-    #assert state.tree == ['import', 'foo']
+def test_parse_import(grammar):
+    state = grammar.parse('import foo')
+    assert state.text == ''
+    assert state.tree == ['import', 'foo']
 
-    #state = grammar.parse('let foo')
-    #assert state.text == ''
-    #assert state.tree == ['let', 'foo']
+def test_parse_let(grammar):
+    state = grammar.parse('let foo')
+    assert state.text == ''
+    assert state.tree == ['let', 'foo']
 
+def test_parse_number(grammar):
     state = grammar.parse('12')
     assert state.text == ''
     assert state.tree == ['12']
 
-    #state = grammar.parse('let foo = 12')
-    #assert state.text == ''
-    #assert state.tree == ['let', 'foo', '=', '12']
+def test_parse_let_assignment(grammar):
+    state = grammar.parse('let foo = 12')
+    assert state.text == ''
+    assert state.tree == ['let', 'foo', '=', '12']
 
-    #state = grammar.parse('["foo", true, -3, 3.14]')
-    #assert state.text == ''
-    #assert state.tree == ['[', '"foo"', ',', 'true', ',', '-3', ',', '3.14', ']']
-    #
-    #state = grammar.parse('funcs.foo(arg: "baz")')
-    #assert state.text == ''
-    #assert state.tree == ['funcs', '.', 'foo', '(', 'arg', ':', '"baz"', ')']
+def test_parse_array(grammar):
+    state = grammar.parse('["foo", true, -3, 3.14]')
+    assert state.text == ''
+    assert state.tree == ['[', '"foo"', ',', 'true', ',', '-3', ',', '3.14', ']']
+
+def test_parse_call(grammar):
+    state = grammar.parse('funcs.foo(arg: "baz")')
+    assert state.text == ''
+    assert state.tree == ['funcs', '.', 'foo', '(', 'arg', ':', '"baz"', ')']
 
