@@ -6,6 +6,41 @@ from typing import List, Optional, Callable, Any
 from abc import abstractmethod
 
 
+class Expect:
+    """ Internal state of expect calculation """
+    def __init__(self) -> None:
+        self._recurseStack:list[list] = [[]]
+
+    def pushParser(self, parser:Any) -> None:
+        """
+        Push the current parser.
+        """
+        self._recurseStack[-1].append(parser)
+
+    def popParser(self) -> None:
+        """
+        Pop the last parser.
+        """
+        self._recurseStack[-1].pop()
+
+    def shiftParser(self) -> None:
+        """
+        Create a new parser stack because we're looking for the element in a sequence
+        """
+        self._recurseStack.append([])
+
+    def unshiftParser(self) -> None:
+        """
+        Toss out the current parser stack.
+        """
+        self._recurseStack.pop()
+
+    def inRecursion(self, parser:Any) -> bool:
+        """
+        See if we're already trying to parse a given parser.
+        """
+        logging.info('RECURSE? %s <- %s == %s', parser, self._recurseStack[-1], parser in self._recurseStack[-1])
+        return parser in self._recurseStack[-1]
 
 
 class State:
@@ -108,14 +143,12 @@ class State:
         """
         Push the current parser.
         """
-        logging.info('pushing parser: %s', parser)
         self._recurseStack[-1].append(parser)
 
     def popParser(self) -> None:
         """
         Pop the last parser.
         """
-        logging.info('popping parser: %s', len(self._recurseStack[-1]))
         self._recurseStack[-1].pop()
 
     def shiftParser(self) -> None:
@@ -134,6 +167,7 @@ class State:
         """
         See if we're already trying to parse a given parser.
         """
+        logging.info('RECURSE? %s <- %s == %s', parser, self._recurseStack[-1], parser in self._recurseStack[-1])
         return parser in self._recurseStack[-1]
 
 
@@ -191,27 +225,26 @@ class Parser:
         """
         Parse a string.
         """
+        logging.info('Parsing: %s', self)
         return self.parseCore(State(text, whitespace))
 
 
-    def parseCore(self, state:State) -> State:
+    def parseCore(self, state:State, recurse=True) -> State:
         """
-        Internal parse function, for call on subparsers.
+        Internal parse function, for calling by subparsers.
         """
         if state.inRecursion(self):
             raise ShiftShiftConflict(state, self.expectCore())
         if self.intern:
             state.pushBranch()
 
-        logging.info('parseCore %s (%s)', self, self.name)
-        state.pushParser(self)
-        logging.info('recurse: %s', state._recurseStack) #pylint: disable=protected-access
+        if not recurse:
+            state.pushParser(self)
         try:
             newState = self.recognize(state)
         finally:
-            logging.info('Finally pop state')
-            state.popParser()
-        logging.info('    newState: %s', newState)
+            if not recurse:
+                state.popParser()
 
         if newState is None:
             if state.eof:
@@ -232,11 +265,18 @@ class Parser:
         return newState
 
 
-    def expectCore(self) -> List[str]:
+    def expectCore(self, state:Expect|None = None) -> List[str]:
         """
         If this parser has a name, then a list containing only its name, otherwise the value returned by expect
         """
-        return [self.name] if self.name else self.expect()
+        state = state or Expect()
+        if state.inRecursion(self):
+            expecting = []
+        else:
+            state.pushParser(self)
+            expecting = [self.name] if self.name else self.expect(state)
+            state.popParser()
+        return expecting
 
     def __repr__(self) -> str:
         """
@@ -248,7 +288,7 @@ class Parser:
 
 
     @abstractmethod
-    def expect(self) -> List[str]:
+    def expect(self, state:Expect) -> List[str]:
         """
         Strings representing what's expected by this parser.
         """

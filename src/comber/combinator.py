@@ -4,7 +4,7 @@ Combinator definitions.
 import logging
 from typing import cast, Optional, Tuple, List, Union, Any
 from abc import ABC
-from .parser import Parser, State, Intern, ParseError
+from .parser import Parser, State, Expect, Intern, ParseError
 
 Parseable = Union['Combinator', str]
 
@@ -49,7 +49,7 @@ class Lit(Combinator):
         super().__init__()
         self.string = string
 
-    def expect(self) -> List[str]:
+    def expect(self, state:Expect) -> List[str]:
         return [self.string]
 
     def recognize(self, state:State) -> Optional[State]:
@@ -97,20 +97,22 @@ class Seq(Combinator):
 
         self.subparsers.append(asCombinator(right))
 
-    def expect(self) -> List[str]:
-        return self.subparsers[0].expectCore()
+    def expect(self, state:Expect) -> List[str]:
+        return self.subparsers[0].expectCore(state)
 
     def recognize(self, state:State) -> Optional[State]:
-        logging.info('SEQUENCE?')
+        first = True
         for parser in self.subparsers:
             try:
-                state.shiftParser()
+                if not first:
+                    state.shiftParser()
                 #state.pushParser(parser)
-                logging.info('  parser: %s, text: %s', parser, state.text)
                 state = parser.parseCore(state)
-                logging.info('  text: %s', state.text)
             finally:
-                state.unshiftParser()
+                if not first:
+                    state.unshiftParser()
+
+            first = False
 
         return state
 
@@ -145,20 +147,22 @@ class Choice(Combinator):
 
         self.subparsers.append(asCombinator(right))
 
-    def expect(self) -> List[str]:
+    def expect(self, state:Expect) -> List[str]:
         return \
             [ string
               for subparser in self.subparsers
-              for string in subparser.expectCore()
+              for string in subparser.expectCore(state)
             ]
 
     def recognize(self, state:State) -> Optional[State]:
         for parser in self.subparsers:
             try:
+                logging.info('Trying choice branch: %s', parser)
                 trialState = state.pushState()
-                trialState = parser.parseCore(trialState)
+                trialState = parser.parseCore(trialState, False)
                 return trialState.popState()
-            except ParseError:
+            except ParseError as ex:
+                logging.info('CHOICE parse error: %s', ex)
                 continue
 
         return None
@@ -188,8 +192,8 @@ class Repeat(Combinator):
         self.maximum = maximum
         self.separator = None if separator is None else asCombinator(separator)
 
-    def expect(self) -> List[str]:
-        return self.subparser.expectCore()
+    def expect(self, state:Expect) -> List[str]:
+        return self.subparser.expectCore(state)
 
     def recognize(self, state:State) -> Optional[State]:
         parsed = 0
@@ -241,8 +245,8 @@ class Id(Combinator):
         self.subparser = asCombinator(subparser)
 
 
-    def expect(self) -> List[str]:
-        return self.subparser.expectCore()
+    def expect(self, state:Expect) -> List[str]:
+        return self.subparser.expectCore(state)
 
 
     def recognize(self, state:State) -> Optional[State]:
@@ -262,7 +266,7 @@ class CClass(Combinator):
     """
     The combinator start's class. Don't instantiate.
     """
-    def expect(self) -> List[str]:
+    def expect(self, state:Expect) -> List[str]:
         return []
 
     def recognize(self, state:State) -> Optional[State]:

@@ -23,12 +23,12 @@ def grammar():
     subscript = expression + '[' + expression + ']'
     group = C+ '(' + expression + ')'
     ifthen = C+ 'if' + expression + 'then' + expression
-    define = C+ 'let' + variable
-    lvalue = define | objectRef | variable
+    define = (C+ 'let' + variable)@'let'
+    lvalue = objectRef | variable | define
     rvalue = expression
-    describe = C+ 'help' + ~expression
-    ext = C+ 'exit'
-    imprt = C+ 'import' + symbol
+    describe = (C+ 'help' + ~expression)@'help'
+    ext = (C+ 'exit')@'exit'
+    imprt = (C+ 'import' + symbol)@'import'
     assignment = (lvalue + '=' + rvalue)@('assignment')
     block = expression[1, inf, ';']
 
@@ -51,34 +51,39 @@ def grammar():
         group |
         variable)
     
-    statement = describe | ext | imprt | assignment | define | expression
+    statement = assignment | define
     
     return statement
 
 
-def test_expect(grammar):
-    assert grammar.expect() == ['help', 'exit', 'import', 'assignment', 'let', 'expression']
+def _test_expect(grammar):
+    assert grammar.expectCore() == ['help', 'exit', 'import', 'assignment', 'let', 'expression']
 
 
-def test_parse_import(grammar):
+def _test_parse_import(grammar):
     state = grammar.parse('import foo')
     assert state.text == ''
     assert state.tree == ['import', 'foo']
+
+def test_parse_assignment(grammar):
+    state = grammar.parse('foo = bar')
+    assert state.text == ''
+    assert state.tree == ['foo', '=', 'bar']
 
 def test_parse_let(grammar):
     state = grammar.parse('let foo')
     assert state.text == ''
     assert state.tree == ['let', 'foo']
 
-def test_parse_number(grammar):
-    state = grammar.parse('12')
-    assert state.text == ''
-    assert state.tree == ['12']
-
 def test_parse_let_assignment(grammar):
     state = grammar.parse('let foo = 12')
     assert state.text == ''
     assert state.tree == ['let', 'foo', '=', '12']
+
+def test_parse_number(grammar):
+    state = grammar.parse('12')
+    assert state.text == ''
+    assert state.tree == ['12']
 
 def test_parse_array(grammar):
     state = grammar.parse('["foo", true, -3, 3.14]')

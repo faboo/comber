@@ -9,7 +9,7 @@ def test_create():
 
 def test_expect():
     parser = Repeat(Lit('foo'), 0, 1, None)
-    assert ['foo'] == parser.expect()
+    assert ['foo'] == parser.expectCore()
 
 def test_parse_exact():
     parser = Repeat(Lit('foo'), 2, None, None)

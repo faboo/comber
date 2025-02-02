@@ -1,5 +1,5 @@
 import pytest
-from comber import Choice, Lit, ParseError
+from comber import C, Choice, Lit, ParseError
 
 def test_create():
     parser = Choice(Lit('foo'), Lit('bar'))
@@ -11,7 +11,7 @@ def test_create():
 
 def test_expect():
     parser = Choice('foo', 'bar')
-    assert ['foo', 'bar'] == parser.expect()
+    assert ['foo', 'bar'] == parser.expectCore()
 
 def test_parse():
     parser = Choice('foo', 'bar')
@@ -26,3 +26,8 @@ def test_parse():
     with pytest.raises(ParseError):
         parser.parse('baz')
 
+def test_parse_with_backtrack():
+    parser = Choice(C+'bar'+'foo', C+'bar'+'foo'+'baz')
+    state = parser.parse('bar foo')
+    assert state.text == ''
+    assert state.tree == ['bar', 'foo']

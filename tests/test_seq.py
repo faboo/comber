@@ -11,7 +11,7 @@ def test_create():
 
 def test_expect():
     parser = Seq('foo', 'bar')
-    assert ['foo'] == parser.expect()
+    assert ['foo'] == parser.expectCore()
 
 def test_parse_seq_success():
     parser = Seq('foo', 'bar')

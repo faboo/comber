@@ -1,16 +1,16 @@
 import pytest
 from comber import delayed, ParseError, Lit
 
-def test_create():
+def test_create_delayed():
     parser = delayed()
     parser.fill('foo')
 
-def test_expect():
+def test_expect_delayed():
     parser = delayed()
     parser.fill(Lit('foo'))
-    assert parser.expect() == Lit('foo').expect()
+    assert parser.expectCore() == Lit('foo').expectCore()
 
-def test_parse():
+def test_parse_delayed():
     parser = delayed()
     parser.fill(Lit('foo'))
 
@@ -20,4 +20,20 @@ def test_parse():
 
     with pytest.raises(ParseError):
         parser.parse('bar')
+
+def test_recurse_delayed():
+    single = delayed()
+    double = single + 'bar'
+    single.fill(double | 'foo')
+
+    state = single.parse('foo')
+    assert state.text == ''
+    assert state.tree == ['foo']
+
+    state = single.parse('foobar')
+    assert state.text == ''
+    assert state.tree == ['foo', 'bar']
+
+    with pytest.raises(ParseError):
+        single.parse('bar')
 

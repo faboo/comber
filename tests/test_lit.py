@@ -5,7 +5,7 @@ def test_create():
     Lit('foo')
 
 def test_expect():
-    assert ['foo'] == Lit('foo').expect()
+    assert ['foo'] == Lit('foo').expectCore()
 
 def test_parse():
     parser = Lit('foo')

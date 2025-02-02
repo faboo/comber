@@ -1,9 +1,10 @@
 """
 Additional non-core parsers.
 """
+import logging
 from typing import Iterable, List, Optional, Any
 import re
-from .parser import State
+from .parser import State, Expect
 from .combinator import Combinator, asCombinator
 
 #pylint: disable=invalid-name
@@ -15,7 +16,7 @@ class cs(Combinator):
         super().__init__()
         self.string = set(string)
 
-    def expect(self) -> List[str]:
+    def expect(self, state:Expect) -> List[str]:
         return list(self.string)
 
     def recognize(self, state:State) -> Optional[State]:
@@ -48,7 +49,7 @@ class rs(Combinator):
             self.raw,
             re.IGNORECASE if caseInsensitive else 0)
 
-    def expect(self) -> List[str]:
+    def expect(self, state:Expect) -> List[str]:
         return [self.raw]
 
     def recognize(self, state:State) -> Optional[State]:
@@ -99,10 +100,11 @@ class delayed(Combinator):
         """
         self._subparser = asCombinator(subparser)
 
-    def expect(self) -> List[str]:
-        return self.subparser.expect()
+    def expect(self, state:Expect) -> List[str]:
+        return self.subparser.expect(state)
 
     def recognize(self, state:State) -> Optional[State]:
+        logging.info('Delayed parse')
         return self.subparser.parseCore(state)
 
     def __eq__(self, right:Any) -> bool:

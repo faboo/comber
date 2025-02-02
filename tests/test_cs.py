@@ -6,7 +6,7 @@ def test_create():
     cs(['foo', 'bar'])
 
 def test_expect():
-    assert set(['f', 'o']) == set(cs('foo').expect())
+    assert set(['f', 'o']) == set(cs('foo').expectCore())
 
 def test_parse():
     parser = cs(' \n')
