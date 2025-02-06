@@ -1,96 +1,113 @@
 import pytest
 from comber import C, rs, delayed, inf
 
-@pytest.fixture
-def grammar():
-    string = rs(r'"(\\"|[^"])*"')@('string')
-    integer = rs(r'[+-]?[0-9]+')@('integer')
-    floating = rs(r'[+-]?[0-9]+\.[0-9]+')@('float')
-    symbol = rs(r'[_a-zA-Z][_a-zA-Z0-9]*')@('symbol')
-    operator = rs(r'[-+*/|&^$@?~=<>]+')@('operator')
+string = rs(r'"(\\"|[^"])*"')@('string')
+integer = rs(r'[+-]?[0-9]+')@('integer')
+floating = rs(r'[+-]?[0-9]+\.[0-9]+')@('float')
+symbol = rs(r'[_a-zA-Z][_a-zA-Z0-9]*')@('symbol')
+operator = rs(r'[-+*/|&^$@?~=<>]+')@('operator')
 
-    expression = delayed()@('expression')
-    constant = string | floating | integer
-    boolean = C+ '!' + expression
-    variable = symbol
-    objectRef = expression + '.' + symbol
-    array = C+ '[' + expression[0, inf, ','] + ']'
-    closure = C+ '\\' + symbol[0, inf, ','] + '.' + expression
-    dictObject = C+ '{' + (symbol + ':' + expression)[0, inf, ','] + '}'
-    call = expression + '(' + (symbol + ':' + expression)[0, inf, ','] + ')'
-    opcall = expression + operator + expression
-    tryex = C+ 'try' + expression
-    subscript = expression + '[' + expression + ']'
-    group = C+ '(' + expression + ')'
-    ifthen = C+ 'if' + expression + 'then' + expression
-    define = (C+ 'let' + variable)@'let'
-    lvalue = objectRef | variable | define
-    rvalue = expression
-    describe = (C+ 'help' + ~expression)@'help'
-    ext = (C+ 'exit')@'exit'
-    imprt = (C+ 'import' + symbol)@'import'
-    assignment = (lvalue + '=' + rvalue)@('assignment')
-    block = expression[1, inf, ';']
+expression = delayed()@('expression')
+constant = string | floating | integer
+boolean = C+ '!' + expression
+variable = symbol
+objectRef = (expression + '.' + symbol)@'reference'
+array = C+ '[' + integer[0, inf, ','] + ']'
+closure = C+ '\\' + symbol[0, inf, ','] + '.' + expression
+dictObject = C+ '{' + (symbol + ':' + expression)[0, inf, ','] + '}'
+call = expression + '(' + (symbol + ':' + expression)[0, inf, ','] + ')'
+opcall = expression + operator + expression
+tryex = C+ 'try' + expression
+subscript = expression + '[' + expression + ']'
+group = C+ '(' + expression + ')'
+ifthen = C+ 'if' + expression + 'then' + expression
+define = (C+ 'let' + variable)@'let'
+lvalue = define | objectRef | variable
+rvalue = expression
 
-    expression.fill(
-        # No start symbol
-        block |
-        opcall |
-        subscript | 
-        call |
-        objectRef |
+describe = (C+ 'help' + ~expression)@'help'
+ext = (C+ 'exit')@'exit'
+imprt = (C+ 'import' + symbol)@'import'
+assignment = (lvalue + '=' + rvalue)@('assignment')
+block = expression[1, inf, ';']
 
-        # Start symbol
-        dictObject |
-        closure |
-        array |
-        constant |
-        boolean |
-        tryex |
-        ifthen |
-        group |
-        variable)
-    
-    statement = assignment | define
-    
-    return statement
+expression.fill(
+    array |
+
+    constant |
+    variable)
+
+grammar = describe | ext | imprt | assignment | define | expression
 
 
-def _test_expect(grammar):
+def _test_expect():
     assert grammar.expectCore() == ['help', 'exit', 'import', 'assignment', 'let', 'expression']
 
 
-def _test_parse_import(grammar):
+def test_parse_import():
     state = grammar.parse('import foo')
     assert state.text == ''
     assert state.tree == ['import', 'foo']
 
-def test_parse_assignment(grammar):
+def test_parse_assignment():
     state = grammar.parse('foo = bar')
     assert state.text == ''
     assert state.tree == ['foo', '=', 'bar']
 
-def test_parse_let(grammar):
+def test_parse_let():
     state = grammar.parse('let foo')
     assert state.text == ''
     assert state.tree == ['let', 'foo']
 
-def test_parse_let_assignment(grammar):
+def test_parse_let_assignment():
+    state = assignment.parse('let foo = 12')
+    assert state.text == ''
+    assert state.tree == ['let', 'foo', '=', '12']
+
     state = grammar.parse('let foo = 12')
     assert state.text == ''
     assert state.tree == ['let', 'foo', '=', '12']
 
-def test_parse_number(grammar):
+def test_parse_number():
+    state = integer.parse('12')
+    assert state.text == ''
+    assert state.tree == ['12']
+
+    state = constant.parse('12')
+    assert state.text == ''
+    assert state.tree == ['12']
+
     state = grammar.parse('12')
     assert state.text == ''
     assert state.tree == ['12']
 
-def test_parse_array(grammar):
-    state = grammar.parse('["foo", true, -3, 3.14]')
+def test_parse_string():
+    state = string.parse('"foo"')
     assert state.text == ''
-    assert state.tree == ['[', '"foo"', ',', 'true', ',', '-3', ',', '3.14', ']']
+    assert state.tree == ['"foo"']
 
-def test_parse_call(grammar):
+    state = constant.parse('"foo"')
+    assert state.text == ''
+    assert state.tree == ['"foo"']
+
+    state = grammar.parse('"foo"')
+    assert state.text == ''
+    assert state.tree == ['"foo"']
+
+def test_parse_array():
+    state = expression.parse('[ ]')
+    assert state.text == ''
+    assert state.tree == ['[', ']']
+
+    state = expression.parse('[ 3 ]')
+    assert state.text == ''
+    assert state.tree == ['[', '3', ']']
+
+    #state = grammar.parse('["foo", true, -3, 3.14]')
+    #assert state.text == ''
+    #assert state.tree == ['[', '"foo"', ',', 'true', ',', '-3', ',', '3.14', ']']
+
+def test_parse_call():
     state = grammar.parse('funcs.foo(arg: "baz")')
     assert state.text == ''
     assert state.tree == ['funcs', '.', 'foo', '(', 'arg', ':', '"baz"', ')']

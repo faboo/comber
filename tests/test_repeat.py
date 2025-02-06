@@ -1,5 +1,5 @@
 import pytest
-from comber import Repeat, Lit, ParseError, inf
+from comber import C, Repeat, Lit, ParseError, inf
 
 def test_create():
     parser = Repeat(Lit('foo'), 0, 1, None)
@@ -64,3 +64,25 @@ def test_parse_inf():
     state = parser.parse('foofoobarfoo')
     assert state.text == 'barfoo'
     assert state.tree == ['foo', 'foo']
+
+def test_parse_bracketed():
+    parser = C + '[' + Lit('foo')[0, inf, None] + ']'
+
+    state = parser.parse('[ foo ]')
+    assert state.text == ''
+    assert state.tree == ['[', 'foo', ']']
+
+def test_parse_bracketed_seperated():
+    parser = C + '[' + Lit('foo')[0, inf, ','] + ']'
+
+    state = parser.parse('[ ]')
+    assert state.text == ''
+    assert state.tree == ['[', ']']
+
+    state = parser.parse('[ foo ]')
+    assert state.text == ''
+    assert state.tree == ['[', 'foo', ']']
+
+    state = parser.parse('[ foo, foo ]')
+    assert state.text == ''
+    assert state.tree == ['[', 'foo', ',', 'foo', ']']

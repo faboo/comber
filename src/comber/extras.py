@@ -1,7 +1,6 @@
 """
 Additional non-core parsers.
 """
-import logging
 from typing import Iterable, List, Optional, Any
 import re
 from .parser import State, Expect
@@ -104,7 +103,6 @@ class delayed(Combinator):
         return self.subparser.expect(state)
 
     def recognize(self, state:State) -> Optional[State]:
-        logging.info('Delayed parse')
         return self.subparser.parseCore(state)
 
     def __eq__(self, right:Any) -> bool:

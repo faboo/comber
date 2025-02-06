@@ -53,7 +53,6 @@ class Lit(Combinator):
         return [self.string]
 
     def recognize(self, state:State) -> Optional[State]:
-        logging.info('self.string: %s ~ %s', self.string, state.text)
         if not state.text.startswith(self.string):
             return None
 
@@ -106,7 +105,6 @@ class Seq(Combinator):
             try:
                 if not first:
                     state.shiftParser()
-                #state.pushParser(parser)
                 state = parser.parseCore(state)
             finally:
                 if not first:
@@ -155,16 +153,26 @@ class Choice(Combinator):
             ]
 
     def recognize(self, state:State) -> Optional[State]:
+        lastParser = None
+        bestMatch = None
+
         for parser in self.subparsers:
             try:
-                logging.info('Trying choice branch: %s', parser)
+                logging.info('Trying choice branch (%s): %s', state.text, parser)
                 trialState = state.pushState()
                 trialState = parser.parseCore(trialState, False)
-                return trialState.popState()
+                if bestMatch is None or len(trialState.text) < len(bestMatch.text):
+                    bestMatch = trialState #.popState()
+                    lastParser = parser
+                    break
             except ParseError as ex:
-                logging.info('CHOICE parse error: %s', ex)
+                logging.info('   skipping: %s', ex)
                 continue
 
+        if bestMatch:
+            state = bestMatch.popState()
+            logging.info('Tree after choice (%s): %s', lastParser, state.tree)
+            return state
         return None
 
     def __or__(self, right:Parseable) -> Parseable:

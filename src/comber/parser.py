@@ -39,7 +39,6 @@ class Expect:
         """
         See if we're already trying to parse a given parser.
         """
-        logging.info('RECURSE? %s <- %s == %s', parser, self._recurseStack[-1], parser in self._recurseStack[-1])
         return parser in self._recurseStack[-1]
 
 
@@ -97,7 +96,7 @@ class State:
         self._tree[-1].append(text)
 
         self.eatWhite()
-        logging.info('text: <%s>', self.text)
+        logging.info('text after consume: <%s>', self.text)
 
     def pushLeaf(self, value:Any) -> None:
         """
@@ -155,19 +154,20 @@ class State:
         """
         Create a new parser stack because we're looking for the element in a sequence
         """
+        logging.info('SHIFTING')
         self._recurseStack.append([])
 
     def unshiftParser(self) -> None:
         """
         Toss out the current parser stack.
         """
+        logging.info('UNSHIFTING %s', self._recurseStack)
         self._recurseStack.pop()
 
     def inRecursion(self, parser:Any) -> bool:
         """
         See if we're already trying to parse a given parser.
         """
-        logging.info('RECURSE? %s <- %s == %s', parser, self._recurseStack[-1], parser in self._recurseStack[-1])
         return parser in self._recurseStack[-1]
 
 
@@ -225,7 +225,7 @@ class Parser:
         """
         Parse a string.
         """
-        logging.info('Parsing: %s', self)
+        logging.info('Parsing: %s (%s)', self, text)
         return self.parseCore(State(text, whitespace))
 
 
@@ -239,24 +239,23 @@ class Parser:
             state.pushBranch()
 
         if not recurse:
+            logging.info('PUSH %s', state._recurseStack)
+            logging.info('    + %s', self)
             state.pushParser(self)
         try:
             newState = self.recognize(state)
         finally:
             if not recurse:
+                logging.info('POP %s', state._recurseStack)
                 state.popParser()
 
         if newState is None:
             if state.eof:
+                logging.info('EOF Original state (%s): %s, %s',
+                    self.__class__.__name__, state.text, state.tree)
                 raise EndOfInputError(state, self.expectCore())
             else:
                 raise ParseError(state, self.expectCore())
-
-        #if newState != state:
-            #logging.info('Popping for new state: %s <> %s', newState, state)
-            #newState.popParser()
-
-        logging.info('recurse after: %s', state._recurseStack) #pylint: disable=protected-access
 
         if self.intern is not None:
             value = self.intern(newState.popBranch())
