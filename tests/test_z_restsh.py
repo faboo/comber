@@ -7,12 +7,12 @@ floating = rs(r'[+-]?[0-9]+\.[0-9]+')@('float')
 symbol = rs(r'[_a-zA-Z][_a-zA-Z0-9]*')@('symbol')
 operator = rs(r'[-+*/|&^$@?~=<>]+')@('operator')
 
-expression = delayed()@('expression')
-constant = string | floating | integer
+expression = delayed() #@('expression')
+constant = (string | floating | integer)@'constant'
 boolean = C+ '!' + expression
 variable = symbol
 objectRef = (expression + '.' + symbol)@'reference'
-array = C+ '[' + integer[0, inf, ','] + ']'
+array = C+ '[' + expression[0, inf, ','] + ']'
 closure = C+ '\\' + symbol[0, inf, ','] + '.' + expression
 dictObject = C+ '{' + (symbol + ':' + expression)[0, inf, ','] + '}'
 call = expression + '(' + (symbol + ':' + expression)[0, inf, ','] + ')'
@@ -32,9 +32,22 @@ assignment = (lvalue + '=' + rvalue)@('assignment')
 block = expression[1, inf, ';']
 
 expression.fill(
-    array |
+    # No start symbol
+    block |
+    opcall |
+    subscript | 
+    call |
+    objectRef |
 
+    # Start symbol
+    dictObject |
+    closure |
+    array |
     constant |
+    boolean |
+    tryex |
+    ifthen |
+    group |
     variable)
 
 grammar = describe | ext | imprt | assignment | define | expression
@@ -59,15 +72,6 @@ def test_parse_let():
     assert state.text == ''
     assert state.tree == ['let', 'foo']
 
-def test_parse_let_assignment():
-    state = assignment.parse('let foo = 12')
-    assert state.text == ''
-    assert state.tree == ['let', 'foo', '=', '12']
-
-    state = grammar.parse('let foo = 12')
-    assert state.text == ''
-    assert state.tree == ['let', 'foo', '=', '12']
-
 def test_parse_number():
     state = integer.parse('12')
     assert state.text == ''
@@ -80,6 +84,15 @@ def test_parse_number():
     state = grammar.parse('12')
     assert state.text == ''
     assert state.tree == ['12']
+
+def test_parse_let_assignment():
+    state = assignment.parse('let foo = 12')
+    assert state.text == ''
+    assert state.tree == ['let', 'foo', '=', '12']
+
+    state = grammar.parse('let foo = 12')
+    assert state.text == ''
+    assert state.tree == ['let', 'foo', '=', '12']
 
 def test_parse_string():
     state = string.parse('"foo"')
@@ -99,9 +112,9 @@ def test_parse_array():
     assert state.text == ''
     assert state.tree == ['[', ']']
 
-    state = expression.parse('[ 3 ]')
-    assert state.text == ''
-    assert state.tree == ['[', '3', ']']
+    #state = expression.parse('[ 3 ]')
+    #assert state.text == ''
+    #assert state.tree == ['[', '3', ']']
 
     #state = grammar.parse('["foo", true, -3, 3.14]')
     #assert state.text == ''

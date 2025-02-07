@@ -3,11 +3,11 @@ from comber import Seq, Lit, ParseError
 
 def test_create():
     parser = Seq(Lit('foo'), Lit('bar'))
-    assert [Lit('foo'), Lit('bar')] == parser.subparsers
+    assert (Lit('foo'), Lit('bar')) == parser.subparsers
     parser = Seq('foo', 'bar')
-    assert [Lit('foo'), Lit('bar')] == parser.subparsers
+    assert (Lit('foo'), Lit('bar')) == parser.subparsers
     parser = Seq(Seq('foo', 'bar'), 'baz')
-    assert [Lit('foo'), Lit('bar'), Lit('baz')] == parser.subparsers
+    assert (Lit('foo'), Lit('bar'), Lit('baz')) == parser.subparsers
 
 def test_expect():
     parser = Seq('foo', 'bar')

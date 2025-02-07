@@ -13,7 +13,7 @@ class cs(Combinator):
     """
     def __init__(self, string:Iterable) -> None:
         super().__init__()
-        self.string = set(string)
+        self.string = tuple(set(string))
 
     def expect(self, state:Expect) -> List[str]:
         return list(self.string)
@@ -109,7 +109,8 @@ class delayed(Combinator):
         return isinstance(right, delayed) and right._subparser == self._subparser
 
     def __hash__(self) -> int:
-        return hash(self._subparser)
+        # Where we care about this, we care about literal identity
+        return hash(id(self))
 
     def repr(self) -> str:
         return f'delayed({self._subparser})'

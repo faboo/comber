@@ -50,8 +50,9 @@ class State:
         self.text = text
         self.line = 1
         self.char = 1
-        self._tree:list = [[]]
-        self._recurseStack:list = [[]]
+        self._tree:list[list] = [[]]
+        # Can this be a set?
+        self._recurseStack:list[set['Parser']] = [set()]
         self._whitespace = whitespace
 
         self.eatWhite()
@@ -138,30 +139,37 @@ class State:
         self._tree[-1] += popped
         return self
 
-    def pushParser(self, parser:Any) -> None:
+    def pushParser(self, parser:'Parser') -> 'State':
         """
         Push the current parser.
         """
-        self._recurseStack[-1].append(parser)
+        state = State(self.text, self._whitespace)
+        state.line = self.line
+        state.char = self.char
+        #pylint: disable=protected-access
+        state._tree = self._tree
+        state._recurseStack = list(self._recurseStack)
+        state._recurseStack[-1] = set(state._recurseStack[-1])
+        state._recurseStack[-1].add(parser)
 
-    def popParser(self) -> None:
+        return state
+
+    def popParser(self, parser:'Parser') -> None:
         """
         Pop the last parser.
         """
-        self._recurseStack[-1].pop()
+        self._recurseStack[-1].remove(parser)
 
     def shiftParser(self) -> None:
         """
         Create a new parser stack because we're looking for the element in a sequence
         """
-        logging.info('SHIFTING')
-        self._recurseStack.append([])
+        self._recurseStack.append(set())
 
     def unshiftParser(self) -> None:
         """
         Toss out the current parser stack.
         """
-        logging.info('UNSHIFTING %s', self._recurseStack)
         self._recurseStack.pop()
 
     def inRecursion(self, parser:Any) -> bool:
@@ -239,15 +247,9 @@ class Parser:
             state.pushBranch()
 
         if not recurse:
-            logging.info('PUSH %s', state._recurseStack)
-            logging.info('    + %s', self)
-            state.pushParser(self)
-        try:
-            newState = self.recognize(state)
-        finally:
-            if not recurse:
-                logging.info('POP %s', state._recurseStack)
-                state.popParser()
+            state = state.pushParser(self)
+
+        newState = self.recognize(state)
 
         if newState is None:
             if state.eof:
@@ -256,6 +258,9 @@ class Parser:
                 raise EndOfInputError(state, self.expectCore())
             else:
                 raise ParseError(state, self.expectCore())
+
+        if not recurse:
+            newState.popParser(self)
 
         if self.intern is not None:
             value = self.intern(newState.popBranch())

@@ -85,16 +85,17 @@ class Seq(Combinator):
     """
     def __init__(self, left:Parseable, right:Parseable) -> None:
         super().__init__()
-        self.subparsers:List[Combinator]
+        self.subparsers:tuple[Combinator, ...]
 
         if isinstance(left, Seq):
-            self.subparsers = left.subparsers
+            subparsers = list(left.subparsers)
+            subparsers.append(asCombinator(right))
+            self.subparsers = tuple(subparsers)
         else:
-            self.subparsers = []
             if left is not C:
-                self.subparsers.append(asCombinator(left))
-
-        self.subparsers.append(asCombinator(right))
+                self.subparsers = (asCombinator(left), asCombinator(right))
+            else:
+                self.subparsers = (asCombinator(right), )
 
     def expect(self, state:Expect) -> List[str]:
         return self.subparsers[0].expectCore(state)
@@ -115,7 +116,9 @@ class Seq(Combinator):
         return state
 
     def __add__(self, right:Parseable) -> Parseable:
-        self.subparsers.append(asCombinator(right))
+        subparsers = list(self.subparsers)
+        subparsers.append(asCombinator(right))
+        self.subparsers = tuple(subparsers)
         return self
 
     def __eq__(self, right:Any) -> bool:
@@ -134,16 +137,17 @@ class Choice(Combinator):
     """
     def __init__(self, left:Parseable, right:Parseable) -> None:
         super().__init__()
-        self.subparsers:List[Combinator]
+        self.subparsers:tuple[Combinator, ...]
 
         if isinstance(left, Choice):
-            self.subparsers = left.subparsers
+            subparsers = list(left.subparsers)
+            subparsers.append(asCombinator(right))
+            self.subparsers = tuple(subparsers)
         else:
-            self.subparsers = []
             if left is not C:
-                self.subparsers.append(asCombinator(left))
-
-        self.subparsers.append(asCombinator(right))
+                self.subparsers = (asCombinator(left), asCombinator(right))
+            else:
+                self.subparsers = (asCombinator(right), )
 
     def expect(self, state:Expect) -> List[str]:
         return \
@@ -176,7 +180,9 @@ class Choice(Combinator):
         return None
 
     def __or__(self, right:Parseable) -> Parseable:
-        self.subparsers.append(asCombinator(right))
+        subparsers = list(self.subparsers)
+        subparsers.append(asCombinator(right))
+        self.subparsers = tuple(subparsers)
         return self
 
     def __eq__(self, right:Any) -> bool:
