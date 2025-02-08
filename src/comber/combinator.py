@@ -139,7 +139,7 @@ class Seq(Combinator):
         return self._hash
 
     def repr(self) -> str:
-        return f'Seq({self.subparsers})'
+        return f'Seq{self.subparsers}'
 
 
 class Choice(Combinator):
@@ -179,10 +179,9 @@ class Choice(Combinator):
                 try:
                     trialState = state.pushState()
                     trialState = parser.parseCore(trialState)
-                    if bestMatch is None or len(trialState.text) < len(bestMatch.text):
-                        bestMatch = trialState
-                        lastParser = parser
-                        break
+                    bestMatch = trialState
+                    lastParser = parser
+                    break
                 except ParseError as ex:
                     continue
 
@@ -202,7 +201,7 @@ class Choice(Combinator):
         return self._hash
 
     def repr(self) -> str:
-        return f'Choice({self.subparsers})'
+        return f'Choice{self.subparsers}'
 
 
 class Repeat(Combinator):

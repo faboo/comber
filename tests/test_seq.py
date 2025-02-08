@@ -1,7 +1,7 @@
 import pytest
 from comber import Seq, Lit, ParseError
 
-def test_create():
+def test_seq_create():
     parser = Seq(Lit('foo'), Lit('bar'))
     assert (Lit('foo'), Lit('bar')) == parser.subparsers
     parser = Seq('foo', 'bar')
@@ -9,7 +9,10 @@ def test_create():
     parser = Seq(Seq('foo', 'bar'), 'baz')
     assert (Lit('foo'), Lit('bar'), Lit('baz')) == parser.subparsers
 
-def test_expect():
+def test_seq_repr():
+    assert repr(Seq('foo', 'bar')) == 'Seq(Lit(foo), Lit(bar))'
+
+def test_seq_expect():
     parser = Seq('foo', 'bar')
     assert ['foo'] == parser.expectCore()
 

@@ -2,23 +2,31 @@ from comber import C, inf, rs
 
 # An email address, as defined by RFC 5321, with minimal optimization
 
-snum = rs('[0-9](1,4)')
+snum = rs('[0-9]{1,3}')
 ipv4address = snum + (C('.') + snum)[3]
 addressliteral = C+ '[' + ipv4address + ']'
 
-letdig = rs('[a-z0-9]', True)
-ldhstr = rs('[-a-z0-9]*', True) + letdig
-subdomain = letdig + ~ldhstr
+subdomain = rs('[a-z0-9][-a-z0-9]*[a-z0-9]', True)
 domain = subdomain + (C('.') + subdomain)[0, inf]
 
-
-atom = rs('[-a-z0-9!#$%&\'*+/=?^_`{|}~]', True)
+atom = rs('[-a-z0-9!#$%&\'*+/=?^_`{|}~]+', True)
 dotstring = atom + (C('.') + atom)[0, inf]
-qtextsmtp = None
-qcontentsmtp = qtextsmtp #| quotedpairsmtp
-#quotedstring = C + '"' + qcontentsmtp[0, inf] + '"'
-localpart = dotstring #| quotedstring
+qcontentsmtp = rs(r'([^\\"]|\\.)*')
+quotedstring = C + '"' + qcontentsmtp[0, inf] + '"'
+localpart = dotstring | quotedstring
 
 mailbox = localpart + '@' + (domain | addressliteral)
 
 mailbox.whitespace = None
+
+def test_simple_address():
+    state = mailbox('foo@bar.com')
+    assert state.text == ''
+    assert state.tree == ['foo', '@', 'bar', '.', 'com']
+
+def test_ipaddress():
+    state = addressliteral('[127.0.0.1]')
+
+    state = mailbox('foo@[127.0.0.1]')
+    assert state.text == ''
+    assert state.tree == ['foo', '@', '[', '127', '.', '0', '.', '0', '.', '1', ']']

@@ -192,6 +192,9 @@ class ParseError(Exception):
             +". Expected one of: " \
             +", ".join(list(set(self.parser.expectCore())))
 
+    def __str__(self) -> str:
+        return self.message
+
 
 class EndOfInputError(ParseError):
     """

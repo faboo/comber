@@ -1,13 +1,16 @@
 import pytest
 from comber import Lit, ParseError
 
-def test_create():
+def test_lit_create():
     Lit('foo')
 
-def test_expect():
+def test_lit_repr():
+    assert repr(Lit('foo')) == 'Lit(foo)'
+
+def test_lit_expect():
     assert ['foo'] == Lit('foo').expectCore()
 
-def test_parse():
+def test_lit_parse():
     parser = Lit('foo')
 
     state = parser('foo')

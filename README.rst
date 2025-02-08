@@ -5,7 +5,7 @@ Comber
 Comber is a parser combinator library that allows the creation of parsers in plain Python with a BNF flavor.
 
 .. code-block:: python
-    from comboer import C, cs, rs, inf
+    from comber import C, cs, rs, inf
     
     sp = cs(' \t\n')[0, inf]
     keyword = rs(r'[_a-zA-Z][_a-zA-Z0-9]*')@('keyword')

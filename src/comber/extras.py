@@ -53,7 +53,7 @@ class rs(Combinator):
             re.IGNORECASE if caseInsensitive else 0)
 
     def expect(self, state:Expect) -> List[str]:
-        return [self.raw]
+        return [f'/{self.raw}/']
 
     def recognize(self, state:State) -> Optional[State]:
         matched = self.regex.match(state.text)
