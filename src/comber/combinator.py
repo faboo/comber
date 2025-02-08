@@ -1,8 +1,8 @@
 """
 Combinator definitions.
 """
-import logging
 from typing import cast, Optional, Tuple, List, Union, Any
+import weakref
 from abc import ABC
 from .parser import Parser, State, Expect, Intern, ParseError
 
@@ -45,9 +45,22 @@ class Lit(Combinator):
     """
     A parser of an exact string
     """
+    instances:weakref.WeakValueDictionary[str,'Lit'] = weakref.WeakValueDictionary()
+
+    def __new__(cls, string:str) -> 'Lit':
+        if string not in cls.instances:
+            instance = super().__new__(cls)
+            cls.__init__(instance, string)
+            cls.instances[string] = instance
+        else:
+            instance = cls.instances[string]
+
+        return instance
+
     def __init__(self, string:str) -> None:
         super().__init__()
         self.string = string
+        self._hash = hash(string)
 
     def expect(self, state:Expect) -> List[str]:
         return [self.string]
@@ -59,11 +72,11 @@ class Lit(Combinator):
         state.consume(len(self.string))
         return state
 
-    def __eq__(self, right:Any) -> bool:
-        return isinstance(right, Lit) and right.string == self.string
+    #def __eq__(self, right:Any) -> bool:
+    #    return isinstance(right, Lit) and right.string == self.string
 
     def __hash__(self) -> int:
-        return hash(self.string)
+        return self._hash
 
     def repr(self) -> str:
         return f'Lit({self.string})'
@@ -97,6 +110,8 @@ class Seq(Combinator):
             else:
                 self.subparsers = (asCombinator(right), )
 
+        self._hash:int = hash(self.subparsers)
+
     def expect(self, state:Expect) -> List[str]:
         return self.subparsers[0].expectCore(state)
 
@@ -119,13 +134,14 @@ class Seq(Combinator):
         subparsers = list(self.subparsers)
         subparsers.append(asCombinator(right))
         self.subparsers = tuple(subparsers)
+        self._hash = hash(self.subparsers)
         return self
 
-    def __eq__(self, right:Any) -> bool:
-        return isinstance(right, Seq) and right.subparsers == self.subparsers
+    #def __eq__(self, right:Any) -> bool:
+    #    return isinstance(right, Seq) and right.subparsers == self.subparsers
 
     def __hash__(self) -> int:
-        return hash(self.subparsers)
+        return self._hash
 
     def repr(self) -> str:
         return f'Seq({self.subparsers})'
@@ -149,6 +165,8 @@ class Choice(Combinator):
             else:
                 self.subparsers = (asCombinator(right), )
 
+        self._hash:int = hash(self.subparsers)
+
     def expect(self, state:Expect) -> List[str]:
         return \
             [ string
@@ -162,20 +180,17 @@ class Choice(Combinator):
 
         for parser in self.subparsers:
             try:
-                logging.info('Trying choice branch (%s): %s', state.text, parser)
                 trialState = state.pushState()
                 trialState = parser.parseCore(trialState, False)
                 if bestMatch is None or len(trialState.text) < len(bestMatch.text):
-                    bestMatch = trialState #.popState()
+                    bestMatch = trialState
                     lastParser = parser
                     break
             except ParseError as ex:
-                logging.info('   skipping: %s', ex)
                 continue
 
         if bestMatch:
             state = bestMatch.popState()
-            logging.info('Tree after choice (%s): %s', lastParser, state.tree)
             return state
         return None
 
@@ -183,13 +198,14 @@ class Choice(Combinator):
         subparsers = list(self.subparsers)
         subparsers.append(asCombinator(right))
         self.subparsers = tuple(subparsers)
+        self._hash = hash(self.subparsers)
         return self
 
-    def __eq__(self, right:Any) -> bool:
-        return isinstance(right, Choice) and right.subparsers == self.subparsers
+    #def __eq__(self, right:Any) -> bool:
+    #    return isinstance(right, Choice) and right.subparsers == self.subparsers
 
     def __hash__(self) -> int:
-        return hash(self.subparsers)
+        return self._hash
 
     def repr(self) -> str:
         return f'Choice({self.subparsers})'

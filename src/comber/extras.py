@@ -59,8 +59,8 @@ class rs(Combinator):
 
         return None
 
-    def __eq__(self, right:Any) -> bool:
-        return isinstance(right, rs) and right.raw == self.raw and right.regex.flags == self.regex.flags
+    #def __eq__(self, right:Any) -> bool:
+    #    return isinstance(right, rs) and right.raw == self.raw and right.regex.flags == self.regex.flags
 
     def __hash__(self) -> int:
         return hash(self.raw)
@@ -103,10 +103,13 @@ class delayed(Combinator):
         return self.subparser.expect(state)
 
     def recognize(self, state:State) -> Optional[State]:
-        return self.subparser.parseCore(state)
+        raise NotImplementedError('Delayed parsers have no recogizer')
 
-    def __eq__(self, right:Any) -> bool:
-        return isinstance(right, delayed) and right._subparser == self._subparser
+    def parseCore(self, state:State, recurse=True) -> State:
+        return self.subparser.parseCore(state, recurse)
+
+    #def __eq__(self, right:Any) -> bool:
+    #    return isinstance(right, delayed) and right._subparser == self._subparser
 
     def __hash__(self) -> int:
         # Where we care about this, we care about literal identity

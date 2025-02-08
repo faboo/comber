@@ -17,16 +17,17 @@ def test_eof():
 def test_seq():
     parser = C + 'foo' + 'bar'
 
-    assert Seq(Seq(C, Lit('foo')), Lit('bar')) == parser
+    assert parser.subparsers == (Lit('foo'), Lit('bar'))
+    #assert Seq(Seq(C, Lit('foo')), Lit('bar')) == parser
 
 def test_choice():
     parser = C('foo') | 'bar'
 
-    assert Choice(Id(Lit('foo')), Lit('bar')) == parser
+    assert parser.subparsers == (Id(Lit('foo')), Lit('bar'))
 
     parser = C('foo') | 'bar' | 'baz'
 
-    assert Choice(Choice(Id(Lit('foo')), Lit('bar')), Lit('baz')) == parser
+    assert parser.subparsers == (Id(Lit('foo')), Lit('bar'), Lit('baz'))
 
 def test_name():
     parser = (C('foo') | 'bar')@'baz'

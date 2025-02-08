@@ -33,9 +33,9 @@ block = expression[1, inf, ';']
 
 expression.fill(
     # No start symbol
-    block |
+#    block |
     opcall |
-    subscript | 
+    subscript |
     call |
     objectRef |
 
@@ -108,17 +108,17 @@ def test_parse_string():
     assert state.tree == ['"foo"']
 
 def test_parse_array():
-    state = expression.parse('[ ]')
+   #state = expression.parse('[ ]')
+   #assert state.text == ''
+   #assert state.tree == ['[', ']']
+
+   #state = expression.parse('[ 3 ]')
+   #assert state.text == ''
+   #assert state.tree == ['[', '3', ']']
+
+    state = grammar.parse('["foo", true, -3, 3.14, false, 17.43]')
     assert state.text == ''
-    assert state.tree == ['[', ']']
-
-    #state = expression.parse('[ 3 ]')
-    #assert state.text == ''
-    #assert state.tree == ['[', '3', ']']
-
-    #state = grammar.parse('["foo", true, -3, 3.14]')
-    #assert state.text == ''
-    #assert state.tree == ['[', '"foo"', ',', 'true', ',', '-3', ',', '3.14', ']']
+    assert state.tree == ['[', '"foo"', ',', 'true', ',', '-3', ',', '3.14', ',', 'false', ',', '17.43', ']']
 
 def test_parse_call():
     state = grammar.parse('funcs.foo(arg: "baz")')

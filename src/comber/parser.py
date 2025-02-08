@@ -1,7 +1,6 @@
 """
 Base parser definitions.
 """
-import logging
 from typing import List, Optional, Callable, Any
 from abc import abstractmethod
 
@@ -51,11 +50,8 @@ class State:
         self.line = 1
         self.char = 1
         self._tree:list[list] = [[]]
-        # Can this be a set?
-        self._recurseStack:list[set['Parser']] = [set()]
+        self._recurseStack:list[set[int]] = [set()]
         self._whitespace = whitespace
-
-        self.eatWhite()
 
     @property
     def eof(self) -> bool:
@@ -77,27 +73,33 @@ class State:
         """
         if self._whitespace:
             text = self.text.lstrip(self._whitespace)
-            lines = self.text[0:len(text)].split('\n')
+            eaten = self.text[0:len(text)]
+            lines = eaten.count('\n')
             self.text = text
-            self.line += len(lines) - 1
-            self.char = len(lines[-1]) + 1
+            self.line += lines
+            self.char = \
+                len(eaten) - (eaten.rfind('\n') + 1) \
+                if lines \
+                else len(eaten)
 
     def consume(self, length:int) -> None:
         """
         Consume a number of characters in the stream.
         """
         text = self.text[0:length]
-        lines = text.split('\n')
+        lines = text.count('\n')
 
-        self.line += len(lines) - 1
+        self.line += lines
+        self.char = \
+            length - (text.rfind('\n') + 1) \
+            if lines \
+            else length
         self.text = self.text[length:]
-
-        self.char = len(lines[-1]) + 1
 
         self._tree[-1].append(text)
 
+        #TODO: Roll the eating into this so we can count line/char once
         self.eatWhite()
-        logging.info('text after consume: <%s>', self.text)
 
     def pushLeaf(self, value:Any) -> None:
         """
@@ -127,6 +129,7 @@ class State:
         #pylint: disable=protected-access
         state._tree = list(self._tree)
         state._recurseStack = list(self._recurseStack)
+        state._recurseStack[-1] = set(state._recurseStack[-1])
         state.pushBranch()
 
         return state
@@ -139,26 +142,17 @@ class State:
         self._tree[-1] += popped
         return self
 
-    def pushParser(self, parser:'Parser') -> 'State':
+    def pushParser(self, parser:'Parser') -> None:
         """
         Push the current parser.
         """
-        state = State(self.text, self._whitespace)
-        state.line = self.line
-        state.char = self.char
-        #pylint: disable=protected-access
-        state._tree = self._tree
-        state._recurseStack = list(self._recurseStack)
-        state._recurseStack[-1] = set(state._recurseStack[-1])
-        state._recurseStack[-1].add(parser)
-
-        return state
+        self._recurseStack[-1].add(id(parser))
 
     def popParser(self, parser:'Parser') -> None:
         """
         Pop the last parser.
         """
-        self._recurseStack[-1].remove(parser)
+        self._recurseStack[-1].remove(id(parser))
 
     def shiftParser(self) -> None:
         """
@@ -176,24 +170,28 @@ class State:
         """
         See if we're already trying to parse a given parser.
         """
-        return parser in self._recurseStack[-1]
+        return id(parser) in self._recurseStack[-1]
 
 
+#TODO: Call expect ourselves when necessary
 class ParseError(Exception):
     """
     When a string cannot be parsed, this exception is thrown.
     """
-    def __init__(self, state:State, expected:List[str]) -> None:
-        super().__init__(
-            str(state.line)+":"+str(state.char)+": "
-            +"Unexpected text: "
-            +state.text[0:10]
-            +". Expected one of: "
-            +", ".join(expected))
+    def __init__(self, state:State, parser:'Parser') -> None:
+        super().__init__('Unexpected text')
         self.line = state.line
         self.char = state.char
-        self.text = state.text[0:10]
-        self.expected = expected
+        self.text = state.text
+        self.parser = parser
+
+    @property
+    def message(self) -> str:
+        return str(self.line)+":"+str(self.char)+": " \
+            +"Unexpected text: " \
+            +self.text[0:10] \
+            +". Expected one of: " \
+            +", ".join(self.parser.expectCore())
 
 
 class EndOfInputError(ParseError):
@@ -233,8 +231,9 @@ class Parser:
         """
         Parse a string.
         """
-        logging.info('Parsing: %s (%s)', self, text)
-        return self.parseCore(State(text, whitespace))
+        state = State(text, whitespace)
+        state.eatWhite()
+        return self.parseCore(state)
 
 
     def parseCore(self, state:State, recurse=True) -> State:
@@ -242,22 +241,25 @@ class Parser:
         Internal parse function, for calling by subparsers.
         """
         if state.inRecursion(self):
-            raise ShiftShiftConflict(state, self.expectCore())
+            raise ShiftShiftConflict(state, self)
         if self.intern:
             state.pushBranch()
 
         if not recurse:
-            state = state.pushParser(self)
+            state.pushParser(self)
 
-        newState = self.recognize(state)
+        try:
+            newState = self.recognize(state)
+        except ParseError:
+            if not recurse:
+                state.popParser(self)
+            raise
 
         if newState is None:
             if state.eof:
-                logging.info('EOF Original state (%s): %s, %s',
-                    self.__class__.__name__, state.text, state.tree)
-                raise EndOfInputError(state, self.expectCore())
+                raise EndOfInputError(state, self)
             else:
-                raise ParseError(state, self.expectCore())
+                raise ParseError(state, self)
 
         if not recurse:
             newState.popParser(self)
