@@ -190,7 +190,7 @@ class ParseError(Exception):
             +"Unexpected text: " \
             +self.text[0:10] \
             +". Expected one of: " \
-            +", ".join(self.parser.expectCore())
+            +", ".join(list(set(self.parser.expectCore())))
 
 
 class EndOfInputError(ParseError):
@@ -237,11 +237,11 @@ class Parser:
         return self.parseCore(state)
 
 
-    def parseCore(self, state:State, recurse=True) -> State:
+    def parseCore(self, state:State) -> State:
         """
         Internal parse function, for calling by subparsers.
         """
-        if state.inRecursion(self):
+        if not self.recurse and state.inRecursion(self):
             raise ShiftShiftConflict(state, self)
         if self.intern:
             state.pushBranch()

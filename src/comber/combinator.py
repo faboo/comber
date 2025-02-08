@@ -46,6 +46,7 @@ class Lit(Combinator):
     A parser of an exact string
     """
     instances:weakref.WeakValueDictionary[str,'Lit'] = weakref.WeakValueDictionary()
+    recurse = True # As an optimization - there's no way Lit can recurse, so don't check
 
     def __new__(cls, string:str) -> 'Lit':
         if string not in cls.instances:
@@ -71,9 +72,6 @@ class Lit(Combinator):
 
         state.consume(len(self.string))
         return state
-
-    #def __eq__(self, right:Any) -> bool:
-    #    return isinstance(right, Lit) and right.string == self.string
 
     def __hash__(self) -> int:
         return self._hash
@@ -137,9 +135,6 @@ class Seq(Combinator):
         self._hash = hash(self.subparsers)
         return self
 
-    #def __eq__(self, right:Any) -> bool:
-    #    return isinstance(right, Seq) and right.subparsers == self.subparsers
-
     def __hash__(self) -> int:
         return self._hash
 
@@ -182,7 +177,7 @@ class Choice(Combinator):
         for parser in self.subparsers:
             try:
                 trialState = state.pushState()
-                trialState = parser.parseCore(trialState, False)
+                trialState = parser.parseCore(trialState)
                 if bestMatch is None or len(trialState.text) < len(bestMatch.text):
                     bestMatch = trialState
                     lastParser = parser
@@ -201,9 +196,6 @@ class Choice(Combinator):
         self.subparsers = tuple(subparsers)
         self._hash = hash(self.subparsers)
         return self
-
-    #def __eq__(self, right:Any) -> bool:
-    #    return isinstance(right, Choice) and right.subparsers == self.subparsers
 
     def __hash__(self) -> int:
         return self._hash

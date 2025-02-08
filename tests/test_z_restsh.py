@@ -138,3 +138,16 @@ def test_parse_call():
     assert state.text == ''
     assert state.tree == ['funcs', '.', 'foo', '(', 'arg', ':', '"baz"', ')']
 
+def test_parse_op_call():
+    state = grammar.parse('1 + 2')
+    assert state.text == ''
+    assert state.tree == ['1', '+', '2']
+
+def test_parse_group():
+    state = grammar.parse('(1 + 2)')
+    assert state.text == ''
+    assert state.tree == ['(', '1', '+', '2', ')']
+
+    state = grammar.parse('("foo")')
+    assert state.text == ''
+    assert state.tree == ['(', '"foo"', ')']
