@@ -295,7 +295,7 @@ class CClass(Combinator):
     def recognize(self, state:State) -> Optional[State]:
         return state
 
-    def __call__(self, arg:Parseable) -> Id:
+    def __call__(self, arg:Parseable) -> Id:#type:ignore
         return Id(arg)
 
     def repr(self) -> str:

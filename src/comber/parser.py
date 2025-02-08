@@ -228,7 +228,7 @@ class Parser:
         self.intern:Optional[Intern] = None
         """ Internalizer function; if not provided, the result will be the parsed string """
 
-    def parse(self, text:str, whitespace:Optional[str]=' \t\n') -> State:
+    def __call__(self, text:str, whitespace:Optional[str]=' \t\n') -> State:
         """
         Parse a string.
         """

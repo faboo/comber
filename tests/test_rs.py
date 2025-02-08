@@ -12,14 +12,14 @@ def test_expect():
 def test_parse():
     parser = rs('[_a-z][a-z]*')
 
-    state = parser.parse('foo')
+    state = parser('foo')
     assert state.text == ''
     assert state.tree == ['foo']
-    state = parser.parse('foo 123')
+    state = parser('foo 123')
     assert state.text == '123'
     assert state.tree == ['foo']
 
     with pytest.raises(ParseError):
-        parser.parse('123')
+        parser('123')
 
 

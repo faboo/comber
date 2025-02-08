@@ -6,28 +6,28 @@ expression = delayed()@'multiplication'
 expression.fill( (C+ '(' + expression+ ')') | (expression + cs('*/+-') + expression) | number | variable)
 
 def test_math_number():
-    state = number.parse('12')
+    state = number('12')
     assert state.text == ''
     assert state.tree == ['12']
 
-    state = expression.parse('12')
+    state = expression('12')
     assert state.text == ''
     assert state.tree == ['12']
 
 def test_math_variable():
-    state = variable.parse('foo')
+    state = variable('foo')
     assert state.text == ''
     assert state.tree == ['foo']
 
-    state = expression.parse('foo')
+    state = expression('foo')
     assert state.text == ''
     assert state.tree == ['foo']
 
 def test_math_multiplication():
-    #state = multiplication.parse('1 * 2')
+    #state = multiplication('1 * 2')
     #assert state.text == ''
     #assert state.tree == ['1', '*', '2']
 
-    state = expression.parse('1 * 2')
+    state = expression('1 * 2')
     assert state.text == ''
     assert state.tree == ['1', '*', '2']

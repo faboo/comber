@@ -11,7 +11,7 @@ def test_eof():
     parser = C('foo')
 
     with pytest.raises(EndOfInputError):
-        parser.parse('')
+        parser('')
 
 
 def test_seq():
@@ -48,7 +48,7 @@ def test_intern():
     parser = (C + 'foo' + 'bar')@('baz', Eval)
     assert parser.name == 'baz'
     assert parser.intern == Eval
-    state = parser.parse('foobar')
+    state = parser('foobar')
     value = state.tree[0]
     assert value.args == ['foo', 'bar']
 
@@ -68,6 +68,6 @@ def test_repeat():
 
 def test_space_eating():
     parser = C+ 'foo' + 'bar'
-    state = parser.parse('foo bar')
+    state = parser('foo bar')
     assert state.text == ''
     assert state.tree == ['foo', 'bar']

@@ -15,19 +15,19 @@ def test_expect():
 
 def test_parse():
     parser = Choice('foo', 'bar')
-    state = parser.parse('foo')
+    state = parser('foo')
     assert state.text == ''
     assert state.tree == ['foo']
 
-    state = parser.parse('bar')
+    state = parser('bar')
     assert state.text == ''
     assert state.tree == ['bar']
 
     with pytest.raises(ParseError):
-        parser.parse('baz')
+        parser('baz')
 
 def test_parse_with_backtrack():
     parser = Choice(C+'bar'+'foo', C+'bar'+'foo'+'baz')
-    state = parser.parse('bar foo')
+    state = parser('bar foo')
     assert state.text == ''
     assert state.tree == ['bar', 'foo']

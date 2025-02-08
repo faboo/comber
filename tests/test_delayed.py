@@ -14,26 +14,26 @@ def test_parse_delayed():
     parser = delayed()
     parser.fill(Lit('foo'))
 
-    state = parser.parse('foo')
+    state = parser('foo')
     assert state.text == ''
     assert state.tree == ['foo']
 
     with pytest.raises(ParseError):
-        parser.parse('bar')
+        parser('bar')
 
 def test_recurse_delayed():
     single = delayed()
     double = single + 'bar'
     single.fill(double | 'foo')
 
-    state = single.parse('foo')
+    state = single('foo')
     assert state.text == ''
     assert state.tree == ['foo']
 
-    state = single.parse('foobar')
+    state = single('foobar')
     assert state.text == ''
     assert state.tree == ['foo', 'bar']
 
     with pytest.raises(ParseError):
-        single.parse('bar')
+        single('bar')
 

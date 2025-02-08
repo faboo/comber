@@ -10,13 +10,13 @@ def test_expect():
 def test_parse():
     parser = Lit('foo')
 
-    state = parser.parse('foo')
+    state = parser('foo')
     assert state.text == ''
     assert state.tree == ['foo']
 
-    state = parser.parse('foobar')
+    state = parser('foobar')
     assert state.text == 'bar'
     assert state.tree == ['foo']
 
     with pytest.raises(ParseError):
-        parser.parse('bar')
+        parser('bar')

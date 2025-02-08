@@ -15,7 +15,7 @@ def test_expect():
 
 def test_parse_seq_success():
     parser = Seq('foo', 'bar')
-    state = parser.parse('foobar')
+    state = parser('foobar')
     assert state.text == ''
     assert state.tree == ['foo', 'bar']
 
@@ -23,11 +23,11 @@ def test_parse_seq_partial_success():
     parser = Seq('foo', 'bar')
 
     with pytest.raises(ParseError):
-        parser.parse('foo')
+        parser('foo')
 
 def test_parse_seq_dont_skip():
     parser = Seq('foo', 'bar')
 
     with pytest.raises(ParseError):
-        parser.parse('bar')
+        parser('bar')
 

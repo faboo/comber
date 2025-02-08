@@ -54,7 +54,7 @@ grammar = describe | ext | imprt | assignment | define | expression
 
 
 def parseArray():
-    state = grammar.parse('["foo", true, -3, 3.14, false, 17.43]')
+    state = grammar('["foo", true, -3, 3.14, false, 17.43]')
     print('tree: ', state.tree)
 
 parseArray()

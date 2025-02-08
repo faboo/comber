@@ -58,96 +58,96 @@ def _test_expect():
 
 
 def test_parse_import():
-    state = grammar.parse('import foo')
+    state = grammar('import foo')
     assert state.text == ''
     assert state.tree == ['import', 'foo']
 
 def test_parse_assignment():
-    state = grammar.parse('foo = bar')
+    state = grammar('foo = bar')
     assert state.text == ''
     assert state.tree == ['foo', '=', 'bar']
 
 def test_parse_let():
-    state = grammar.parse('let foo')
+    state = grammar('let foo')
     assert state.text == ''
     assert state.tree == ['let', 'foo']
 
 def test_parse_number():
-    state = integer.parse('12')
+    state = integer('12')
     assert state.text == ''
     assert state.tree == ['12']
 
-    state = constant.parse('12')
+    state = constant('12')
     assert state.text == ''
     assert state.tree == ['12']
 
-    state = grammar.parse('12')
+    state = grammar('12')
     assert state.text == ''
     assert state.tree == ['12']
 
 def test_parse_let_assignment():
-    state = assignment.parse('let foo = 12')
+    state = assignment('let foo = 12')
     assert state.text == ''
     assert state.tree == ['let', 'foo', '=', '12']
 
-    state = grammar.parse('let foo = 12')
+    state = grammar('let foo = 12')
     assert state.text == ''
     assert state.tree == ['let', 'foo', '=', '12']
 
 def test_parse_string():
-    state = string.parse('"foo"')
+    state = string('"foo"')
     assert state.text == ''
     assert state.tree == ['"foo"']
 
-    state = constant.parse('"foo"')
+    state = constant('"foo"')
     assert state.text == ''
     assert state.tree == ['"foo"']
 
-    state = grammar.parse('"foo"')
+    state = grammar('"foo"')
     assert state.text == ''
     assert state.tree == ['"foo"']
 
 def test_parse_array():
-    state = expression.parse('[ ]')
+    state = expression('[ ]')
     assert state.text == ''
     assert state.tree == ['[', ']']
 
-    state = expression.parse('[ 3 ]')
+    state = expression('[ 3 ]')
     assert state.text == ''
     assert state.tree == ['[', '3', ']']
 
-    state = grammar.parse('["foo", true, -3, 3.14, false, 17.43]')
+    state = grammar('["foo", true, -3, 3.14, false, 17.43]')
     assert state.text == ''
     assert state.tree == ['[', '"foo"', ',', 'true', ',', '-3', ',', '3.14', ',', 'false', ',', '17.43', ']']
 
 def test_parse_objectRef():
-    state = objectRef.parse('funcs.foo')
+    state = objectRef('funcs.foo')
     assert state.text == ''
     assert state.tree == ['funcs', '.', 'foo']
 
-    state = expression.parse('funcs.foo')
+    state = expression('funcs.foo')
     assert state.text == ''
     assert state.tree == ['funcs', '.', 'foo']
 
-    state = grammar.parse('funcs.foo')
+    state = grammar('funcs.foo')
     assert state.text == ''
     assert state.tree == ['funcs', '.', 'foo']
 
 def test_parse_call():
-    state = grammar.parse('funcs.foo(arg: "baz")')
+    state = grammar('funcs.foo(arg: "baz")')
     assert state.text == ''
     assert state.tree == ['funcs', '.', 'foo', '(', 'arg', ':', '"baz"', ')']
 
 def test_parse_op_call():
-    state = grammar.parse('1 + 2')
+    state = grammar('1 + 2')
     assert state.text == ''
     assert state.tree == ['1', '+', '2']
 
 def test_parse_group():
-    state = grammar.parse('(1 + 2)')
+    state = grammar('(1 + 2)')
     assert state.text == ''
     assert state.tree == ['(', '1', '+', '2', ')']
 
-    state = grammar.parse('("foo")')
+    state = grammar('("foo")')
     assert state.text == ''
     assert state.tree == ['(', '"foo"', ')']
