@@ -38,7 +38,7 @@ class Expect:
         """
         See if we're already trying to parse a given parser.
         """
-        return parser in self._recurseStack[-1]
+        return not parser.recurse and parser in self._recurseStack[-1]
 
 
 class State:
@@ -170,7 +170,7 @@ class State:
         """
         See if we're already trying to parse a given parser.
         """
-        return id(parser) in self._recurseStack[-1]
+        return not parser.recurse and id(parser) in self._recurseStack[-1]
 
 
 class ParseError(Exception):
@@ -203,12 +203,6 @@ class ShiftShiftConflict(ParseError):
     When we encounter a shift-shift conflict
     """
 
-class ShiftReduceConflict(ParseError):
-    """
-    When we encounter a shift-reduce conflict (e.g. we would "shift" into a recursive rule, but we ought to reduce
-    instead)
-    """
-
 
 Intern = Callable[[List[Any]], Any]
 """
@@ -227,12 +221,14 @@ class Parser:
         """ Friendly name of this sub-parser """
         self.intern:Optional[Intern] = None
         """ Internalizer function; if not provided, the result will be the parsed string """
+        self.whitespace:str|None = ' \t\n'
+        """ Default whitespace """
 
-    def __call__(self, text:str, whitespace:Optional[str]=' \t\n') -> State:
+    def __call__(self, text:str, whitespace:str|None=None) -> State:
         """
         Parse a string.
         """
-        state = State(text, whitespace)
+        state = State(text, whitespace if whitespace is not None else self.whitespace)
         state.eatWhite()
         return self.parseCore(state)
 
@@ -241,7 +237,7 @@ class Parser:
         """
         Internal parse function, for calling by subparsers.
         """
-        if not self.recurse and state.inRecursion(self):
+        if state.inRecursion(self):
             raise ShiftShiftConflict(state, self)
         if self.intern:
             state.pushBranch()

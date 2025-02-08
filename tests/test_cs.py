@@ -10,8 +10,9 @@ def test_expect():
 
 def test_parse():
     parser = cs(' \n')
+    parser.whitespace = None
 
-    state = parser(' foo', whitespace=None)
+    state = parser(' foo')
     assert state.text == 'foo'
     assert state.tree == [' ']
 

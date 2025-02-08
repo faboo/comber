@@ -11,6 +11,8 @@ class cs(Combinator):
     """
     Parse one of a list of strings, or one of a character in a string.
     """
+    recurse = True # As an optimization - there's no way cs can recurse, so don't check
+
     def __init__(self, string:Iterable) -> None:
         super().__init__()
         self.string = tuple(set(string))
@@ -41,6 +43,8 @@ class rs(Combinator):
     """
     Parse using a regular expression
     """
+    recurse = True # As an optimization - there's no way rs can recurse, so don't check
+
     def __init__(self, regex:str, caseInsensitive=False) -> None:
         super().__init__()
         self.raw = regex

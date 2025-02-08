@@ -61,4 +61,10 @@ not       __not__
 -         __neg__
 +         __pos__
 
-Possibly useful: __call__
+And:
+
+========  =====
+Method    Current Use
+========  =====
+
+__call__  parse a string

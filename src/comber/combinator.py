@@ -175,15 +175,16 @@ class Choice(Combinator):
         bestMatch = None
 
         for parser in self.subparsers:
-            try:
-                trialState = state.pushState()
-                trialState = parser.parseCore(trialState)
-                if bestMatch is None or len(trialState.text) < len(bestMatch.text):
-                    bestMatch = trialState
-                    lastParser = parser
-                    break
-            except ParseError as ex:
-                continue
+            if not state.inRecursion(parser):
+                try:
+                    trialState = state.pushState()
+                    trialState = parser.parseCore(trialState)
+                    if bestMatch is None or len(trialState.text) < len(bestMatch.text):
+                        bestMatch = trialState
+                        lastParser = parser
+                        break
+                except ParseError as ex:
+                    continue
 
         if bestMatch:
             state = bestMatch.popState()
@@ -214,6 +215,7 @@ class Repeat(Combinator):
         self.minimum = minimum
         self.maximum = maximum
         self.separator = None if separator is None else asCombinator(separator)
+        self._hash = hash(hash(self.subparser)+hash(self.minimum)+hash(self.maximum))
 
     def expect(self, state:Expect) -> List[str]:
         return self.subparser.expectCore(state)
@@ -246,14 +248,8 @@ class Repeat(Combinator):
 
         return state
 
-    def __eq__(self, right:Any) -> bool:
-        return isinstance(right, Repeat) \
-            and right.subparser == self.subparser \
-            and right.minimum == self.minimum \
-            and right.maximum == self.maximum
-
     def __hash__(self) -> int:
-        return hash(hash(self.subparser)+hash(self.minimum)+hash(self.maximum))
+        return self._hash
 
     def repr(self) -> str:
         return f'Repeat({self.subparser}, {self.minimum}, {self.maximum})'
