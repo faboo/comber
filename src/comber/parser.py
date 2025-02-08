@@ -173,7 +173,6 @@ class State:
         return id(parser) in self._recurseStack[-1]
 
 
-#TODO: Call expect ourselves when necessary
 class ParseError(Exception):
     """
     When a string cannot be parsed, this exception is thrown.
@@ -218,6 +217,8 @@ Type of internalizer functions.
 
 
 class Parser:
+    recurse = False
+
     """
     Base parser.
     """
@@ -245,13 +246,13 @@ class Parser:
         if self.intern:
             state.pushBranch()
 
-        if not recurse:
+        if not self.recurse:
             state.pushParser(self)
 
         try:
             newState = self.recognize(state)
         except ParseError:
-            if not recurse:
+            if not self.recurse:
                 state.popParser(self)
             raise
 
@@ -261,7 +262,7 @@ class Parser:
             else:
                 raise ParseError(state, self)
 
-        if not recurse:
+        if not self.recurse:
             newState.popParser(self)
 
         if self.intern is not None:

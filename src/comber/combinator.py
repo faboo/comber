@@ -151,6 +151,7 @@ class Choice(Combinator):
     """
     Parse as the first successful parse.
     """
+    recurse = True
     def __init__(self, left:Parseable, right:Parseable) -> None:
         super().__init__()
         self.subparsers:tuple[Combinator, ...]
