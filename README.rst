@@ -7,6 +7,7 @@ Comber is a parser combinator library for creating text parsers in plain Python 
 For instance, we could define a simple grammar for calling functions on integer values like this:
 
 .. code-block:: python
+
     from comber import C, rs, inf
     
     keyword = rs(r'[_a-zA-Z][_a-zA-Z0-9]*')@('keyword')
@@ -21,6 +22,7 @@ For instance, we could define a simple grammar for calling functions on integer 
 Our toy grammar can handle simple import statements, variable assignment, and function calling. For example:
 
 .. code-block::
+
     import math
     import sys.io
     
@@ -32,6 +34,7 @@ Our toy grammar can handle simple import statements, variable assignment, and fu
 To use our parser, we simply pass a string to it:
 
 .. code-block:: python
+
     from comber import ParseError
 
     code = "add(17, 3)"
