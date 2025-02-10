@@ -86,24 +86,26 @@ class State:
         """
         Consume a number of characters in the stream.
         """
-        text = self.text[0:length]
+        eaten = text = self.text[0:length]
         self.text = self.text[length:]
 
         if self._whitespace:
             stripped = self.text.lstrip(self._whitespace)
-            eaten = self.text[0:len(stripped)]
+            eaten = text + self.text[0:len(stripped)]
             self.text = stripped
-            text += eaten
 
-        lines = text.count('\n')
+        lines = eaten.count('\n')
 
         self.line += lines
         self.char = \
-            length - (text.rfind('\n') + 1) \
+            length - (eaten.rfind('\n') + 1) \
             if lines \
             else length
 
         self._tree[-1].append(text)
+
+        #TODO: Roll the eating into this so we can count line/char once
+        #self.eatWhite()
 
     def pushLeaf(self, value:Any) -> None:
         """
