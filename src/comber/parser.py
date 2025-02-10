@@ -55,6 +55,7 @@ class State:
             recurseStack:list[set[int]]|None = None,
             ) -> None:
         self.text = text
+        """ Unparsed input """
         self.line = line
         self.char = char
         self.eof = False
