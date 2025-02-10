@@ -45,20 +45,22 @@ class State:
     """
     Internal parse state.
     """
-    def __init__(self, text:str, whitespace:Optional[str]) -> None:
-        self.text = text
-        self.line = 1
-        self.char = 1
-        self._tree:list[list] = [[]]
-        self._recurseStack:list[set[int]] = [set()]
-        self._whitespace = whitespace
+    def __init__(self,
+            text:str,
+            whitespace:str|None,
 
-    @property
-    def eof(self) -> bool:
-        """
-        True if we have run out of characters to read
-        """
-        return not self.text
+            line:int = 1,
+            char:int = 1,
+            tree:list[list]|None = None,
+            recurseStack:list[set[int]]|None = None,
+            ) -> None:
+        self.text = text
+        self.line = line
+        self.char = char
+        self.eof = False
+        self._tree:list[list] = tree if tree is not None else [[]]
+        self._recurseStack:list[set[int]] = recurseStack if recurseStack is not None else [set()]
+        self._whitespace = whitespace
 
     @property
     def tree(self) -> list:
@@ -81,6 +83,7 @@ class State:
                 len(eaten) - (eaten.rfind('\n') + 1) \
                 if lines \
                 else len(eaten)
+            self.eof = not self.text
 
     def consume(self, length:int) -> None:
         """
@@ -103,9 +106,7 @@ class State:
             else length
 
         self._tree[-1].append(text)
-
-        #TODO: Roll the eating into this so we can count line/char once
-        #self.eatWhite()
+        self.eof = not self.text
 
     def pushLeaf(self, value:Any) -> None:
         """
@@ -129,13 +130,16 @@ class State:
         """
         Extend this state.
         """
-        state = State(self.text, self._whitespace)
-        state.line = self.line
-        state.char = self.char
-        #pylint: disable=protected-access
-        state._tree = list(self._tree)
-        state._recurseStack = list(self._recurseStack)
-        state._recurseStack[-1] = set(state._recurseStack[-1])
+        stack = list(self._recurseStack)
+        stack[-1] = set(stack[-1])
+        state = State(
+            self.text,
+            self._whitespace,
+            self.line,
+            self.char,
+            list(self._tree),
+            stack
+            )
         state.pushBranch()
 
         return state
@@ -220,14 +224,15 @@ Type of internalizer functions.
 
 
 class Parser:
+    """
+    Base parser.
+    """
+
     recurse = False
     """ If True, the parser class is allowed to recurse without any checks. """
     compound = False
     """ If True, the parser class is a compound class, and so may fail partway through. """
 
-    """
-    Base parser.
-    """
     def __init__(self) -> None:
         self.name:Optional[str] = None
         """ Friendly name of this sub-parser """

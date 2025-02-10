@@ -40,6 +40,29 @@ class Combinator(Parser, ABC):
     def __invert__(self) -> 'Combinator':
         return Repeat(self, 0, 1, None)
 
+    def simplify(self) -> 'Combinator':
+        return self
+
+    def analyze(self) -> None:
+        analyzed:set[Combinator] = set()
+        parsers:list[Combinator] = [self]
+
+        while parsers:
+            parser = parsers.pop()
+
+            if hasattr(parser, 'subparsers'):
+                subparsers = tuple(sub.simplify() for sub in getattr(parser, 'subparsers'))
+                setattr(parser, 'subparsers', subparsers)
+                parsers.extend(list(sub for sub in subparsers if sub not in analyzed))
+                analyzed.update(subparsers)
+
+            elif hasattr(parser, 'subparser'):
+                subparser = getattr(parser, 'subparser').simplify()
+                setattr(parser, 'subparser', subparser)
+                if parser not in analyzed:
+                    parsers.append(subparser)
+                    analyzed.add(subparser)
+
 
 class Lit(Combinator):
     """
@@ -125,8 +148,8 @@ class Seq(Combinator):
             finally:
                 if not first:
                     state.unshiftParser()
-
-            first = False
+                else:
+                    first = False
 
         return state
 
@@ -184,7 +207,9 @@ class Choice(Combinator):
                         trialState = state.pushState()
                     else:
                         trialState = state
+
                     state = parser.parseCore(trialState)
+
                     if parser.compound:
                         state = state.popState()
                     bestState = state

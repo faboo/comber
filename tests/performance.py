@@ -60,6 +60,5 @@ def parseArray():
     for _ in range(0, 20):
         grammar('[]')
         grammar('["foo", true, -3, 3.14, false, 17.43]')
-    #print('tree: ', state.tree)
 
 parseArray()

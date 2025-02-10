@@ -80,41 +80,44 @@ class delayed(Combinator):
 
     def __init__(self) -> None:
         super().__init__()
-        self._subparser:Optional[Combinator] = None
+        self._coreparser:Optional[Combinator] = None
 
     @property
-    def subparser(self) -> Combinator:
+    def coreparser(self) -> Combinator:
         """
         The parser this delayed parser is the stand-in for.
         """
-        if self._subparser is None:
+        if self._coreparser is None:
             message = 'Unfulfilled delay parser'
             if self.name:
                 message += f' ({self.name})'
             #pylint: disable=broad-exception-raised
             raise Exception(message)
 
-        return self._subparser
+        return self._coreparser
 
-    def fill(self, subparser:Combinator) -> None:
+    def fill(self, coreparser:Combinator) -> None:
         """
         Fill in the parser for this delayed parser.
         """
-        self._subparser = asCombinator(subparser)
+        self._coreparser = asCombinator(coreparser)
 
     def expect(self, state:Expect) -> List[str]:
-        return self.subparser.expect(state)
+        return self.coreparser.expect(state)
 
     def recognize(self, state:State) -> Optional[State]:
         raise NotImplementedError('Delayed parsers have no recogizer')
 
     def parseCore(self, state:State) -> State:
-        return self.subparser.parseCore(state)
+        return self.coreparser.parseCore(state)
+
+    def simplify(self) -> Combinator:
+        return self.coreparser
 
     def __hash__(self) -> int:
         # Where we care about this, we care about literal identity
         return hash(id(self))
 
     def repr(self) -> str:
-        return f'delayed({self._subparser})'
+        return f'delayed({self._coreparser})'
 
