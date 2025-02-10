@@ -54,9 +54,9 @@ Available Operators
 Operators that Python allows to overridden
 
 
-========  ==============  =====
+========  ==============  ===========
 Operator  Method          Current use
-========  ==============  =====
+========  ==============  ===========
 +         __add__         sequences
 |         __or__          selection
 [ ]       __getitem__     repeat
@@ -80,22 +80,20 @@ is not    is_not
 <<        __lshift__
 >>        __rshift__
 in        __contains__
+========  ==============  ===========
 
 
 Unary operators:
 
-========  ===========  =====
+========  ===========  ===========
 Operator  Method       Current use
-========  ===========  =====
+========  ===========  ===========
 ~         __invert__   optional
 not       __not__
 -         __neg__
 +         __pos__      zero or more
+========  ===========  ===========
 
-And:
+And::
 
-========  =========  =====
-Operator  Method     Current Use
-========  =========  =====
-
-()        __call__   parse a string
+    ()        __call__   parse a string
