@@ -1,7 +1,7 @@
 """
 Base parser definitions.
 """
-from typing import List, Optional, Callable, Any
+from typing import cast, Optional, Callable, Any
 from abc import abstractmethod
 
 
@@ -87,6 +87,14 @@ class State:
         Consume a number of characters in the stream.
         """
         text = self.text[0:length]
+        self.text = self.text[length:]
+
+        if self._whitespace:
+            stripped = self.text.lstrip(self._whitespace)
+            eaten = self.text[0:len(stripped)]
+            self.text = stripped
+            text += eaten
+
         lines = text.count('\n')
 
         self.line += lines
@@ -94,12 +102,8 @@ class State:
             length - (text.rfind('\n') + 1) \
             if lines \
             else length
-        self.text = self.text[length:]
 
         self._tree[-1].append(text)
-
-        #TODO: Roll the eating into this so we can count line/char once
-        self.eatWhite()
 
     def pushLeaf(self, value:Any) -> None:
         """
@@ -207,7 +211,7 @@ class ShiftShiftConflict(ParseError):
     """
 
 
-Intern = Callable[[List[Any]], Any]
+Intern = Callable[[list[Any]], Any]
 """
 Type of internalizer functions.
 """
@@ -215,6 +219,9 @@ Type of internalizer functions.
 
 class Parser:
     recurse = False
+    """ If True, the parser class is allowed to recurse without any checks. """
+    compound = False
+    """ If True, the parser class is a compound class, and so may fail partway through. """
 
     """
     Base parser.
@@ -240,8 +247,6 @@ class Parser:
         """
         Internal parse function, for calling by subparsers.
         """
-        if state.inRecursion(self):
-            raise ShiftShiftConflict(state, self)
         if self.intern:
             state.pushBranch()
 
@@ -271,7 +276,7 @@ class Parser:
         return newState
 
 
-    def expectCore(self, state:Expect|None = None) -> List[str]:
+    def expectCore(self, state:Expect|None = None) -> list[str]:
         """
         If this parser has a name, then a list containing only its name, otherwise the value returned by expect
         """
@@ -293,8 +298,14 @@ class Parser:
         return self.repr()
 
 
+    def analyze(self) -> None:
+        """
+        Analyze the grammar to improve performance.
+        """
+
+
     @abstractmethod
-    def expect(self, state:Expect) -> List[str]:
+    def expect(self, state:Expect) -> list[str]:
         """
         Strings representing what's expected by this parser.
         """

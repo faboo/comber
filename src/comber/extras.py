@@ -58,7 +58,7 @@ class rs(Combinator):
     def recognize(self, state:State) -> Optional[State]:
         matched = self.regex.match(state.text)
         if matched:
-            state.consume(len(matched.group(0)))
+            state.consume(len(matched[0]))
             return state
 
         return None
@@ -76,6 +76,8 @@ class delayed(Combinator):
     A placeholder parser that can be filled in later with another parser.
     Useful for recusive definitions.
     """
+    compound = True
+
     def __init__(self) -> None:
         super().__init__()
         self._subparser:Optional[Combinator] = None

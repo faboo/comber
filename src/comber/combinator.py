@@ -94,6 +94,8 @@ class Seq(Combinator):
     """
     A sequence of parsers.
     """
+    compound = True
+
     def __init__(self, left:Parseable, right:Parseable) -> None:
         super().__init__()
         self.subparsers:tuple[Combinator, ...]
@@ -147,6 +149,8 @@ class Choice(Combinator):
     Parse as the first successful parse.
     """
     recurse = True
+    compound = True
+
     def __init__(self, left:Parseable, right:Parseable) -> None:
         super().__init__()
         self.subparsers:tuple[Combinator, ...]
@@ -171,24 +175,24 @@ class Choice(Combinator):
             ]
 
     def recognize(self, state:State) -> Optional[State]:
-        lastParser = None
-        bestMatch = None
-
+        bestState:State|None = None
+        
         for parser in self.subparsers:
             if not state.inRecursion(parser):
                 try:
-                    trialState = state.pushState()
-                    trialState = parser.parseCore(trialState)
-                    bestMatch = trialState
-                    lastParser = parser
+                    if parser.compound:
+                        trialState = state.pushState()
+                    else:
+                        trialState = state
+                    state = parser.parseCore(trialState)
+                    if parser.compound:
+                        state = state.popState()
+                    bestState = state
                     break
                 except ParseError as ex:
                     continue
 
-        if bestMatch:
-            state = bestMatch.popState()
-            return state
-        return None
+        return bestState
 
     def __or__(self, right:Parseable) -> Parseable:
         subparsers = list(self.subparsers)
@@ -208,6 +212,8 @@ class Repeat(Combinator):
     """
     Repeat a combinator.
     """
+    compound = True
+
     def __init__(self, subparser:Combinator, minimum:int, maximum:Optional[int], separator:Optional[Parseable]) -> None:
         super().__init__()
         self.subparser = subparser
@@ -234,13 +240,20 @@ class Repeat(Combinator):
         if self.maximum is not None:
             while parsed < self.maximum:
                 try:
-                    trialState = state.pushState()
+                    mustPop = self.subparser.compound or self.separator and self.separator.compound
+                    if mustPop:
+                        trialState = state.pushState()
+                    else:
+                        trialState = state
 
                     if parsed > 0 and self.separator:
                         trialState = self.separator.parseCore(trialState)
 
-                    trialState = self.subparser.parseCore(trialState)
-                    state = trialState.popState()
+                    state = self.subparser.parseCore(trialState)
+
+                    if mustPop:
+                        state = state.popState()
+
                     parsed += 1
                 except ParseError:
                     break
@@ -258,14 +271,14 @@ class Id(Combinator):
     """
     Parse exactly the subparser.
     """
+    compound = True
+
     def __init__(self, subparser:Parseable) -> None:
         super().__init__()
         self.subparser = asCombinator(subparser)
 
-
     def expect(self, state:Expect) -> List[str]:
         return self.subparser.expectCore(state)
-
 
     def recognize(self, state:State) -> Optional[State]:
         return self.subparser.parseCore(state)

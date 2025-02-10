@@ -1,3 +1,4 @@
+import sys
 import cProfile
 from comber import C, rs, delayed, inf
 
@@ -7,14 +8,14 @@ floating = rs(r'[+-]?[0-9]+\.[0-9]+')@('float')
 symbol = rs(r'[_a-zA-Z][_a-zA-Z0-9]*')@('symbol')
 operator = rs(r'[-+*/|&^$@?~=<>]+')@('operator')
 
-expression = delayed() #@('expression')
+expression = delayed()@('expression')
 constant = (string | floating | integer)@'constant'
 boolean = C+ '!' + expression
 variable = symbol
 objectRef = (expression + '.' + symbol)@'reference'
-array = C+ '[' + expression[0, inf, ','] + ']'
-closure = C+ '\\' + symbol[0, inf, ','] + '.' + expression
-dictObject = C+ '{' + (symbol + ':' + expression)[0, inf, ','] + '}'
+array = (C+ '[' + expression[0, inf, ','] + ']')@'array'
+closure = (C+ '\\' + symbol[0, inf, ','] + '.' + expression)@'closure'
+dictObject = (C+ '{' + (symbol + ':' + expression)[0, inf, ','] + '}')@'dict'
 call = expression + '(' + (symbol + ':' + expression)[0, inf, ','] + ')'
 opcall = expression + operator + expression
 tryex = C+ 'try' + expression
@@ -54,7 +55,11 @@ grammar = describe | ext | imprt | assignment | define | expression
 
 
 def parseArray():
-    state = grammar('["foo", true, -3, 3.14, false, 17.43]')
-    print('tree: ', state.tree)
+    if '--analyze' in sys.argv:
+        grammar.analyze()
+    for _ in range(0, 20):
+        grammar('[]')
+        grammar('["foo", true, -3, 3.14, false, 17.43]')
+    #print('tree: ', state.tree)
 
 parseArray()
