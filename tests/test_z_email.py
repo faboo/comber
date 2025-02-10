@@ -7,12 +7,12 @@ ipv4address = snum + (C('.') + snum)[3]
 addressliteral = C+ '[' + ipv4address + ']'
 
 subdomain = rs('[a-z0-9][-a-z0-9]*[a-z0-9]', True)
-domain = subdomain + (C('.') + subdomain)[0, inf]
+domain = subdomain + +(C('.') + subdomain)
 
 atom = rs('[-a-z0-9!#$%&\'*+/=?^_`{|}~]+', True)
-dotstring = atom + (C('.') + atom)[0, inf]
+dotstring = atom + +(C('.') + atom)
 qcontentsmtp = rs(r'([^\\"]|\\.)*')
-quotedstring = C + '"' + qcontentsmtp[0, inf] + '"'
+quotedstring = C + '"' + +qcontentsmtp + '"'
 localpart = dotstring | quotedstring
 
 mailbox = localpart + '@' + (domain | addressliteral)

@@ -3,6 +3,7 @@ Combinator definitions.
 """
 from typing import cast, Optional, Tuple, List, Union, Any
 import weakref
+from math import inf
 from abc import ABC
 from .parser import Parser, State, Expect, Intern, ParseError
 
@@ -31,7 +32,7 @@ class Combinator(Parser, ABC):
     def __or__(self, right:Parseable) -> Parseable:
         return Choice(self, right)
 
-    def __getitem__(self, args:Union[int,Tuple[int,int],Tuple[int,int,Parseable]]) -> 'Combinator':
+    def __getitem__(self, args:Union[int,Tuple[int,int|float],Tuple[int,int|float,Parseable]]) -> 'Combinator':
         minimum = args if isinstance(args, int) else args[0]
         maximum = None if isinstance(args, int) else args[1]
         separator = None if isinstance(args, int) or len(args) < 3 else cast(Tuple[int,int,Parseable], args)[2]
@@ -39,6 +40,9 @@ class Combinator(Parser, ABC):
 
     def __invert__(self) -> 'Combinator':
         return Repeat(self, 0, 1, None)
+
+    def __pos__(self) -> 'Combinator':
+        return Repeat(self, 0, inf, None)
 
     def simplify(self) -> 'Combinator':
         return self
@@ -239,7 +243,7 @@ class Repeat(Combinator):
     """
     compound = True
 
-    def __init__(self, subparser:Combinator, minimum:int, maximum:Optional[int], separator:Optional[Parseable]) -> None:
+    def __init__(self, subparser:Combinator, minimum:int, maximum:Optional[int|float], separator:Optional[Parseable]) -> None:
         super().__init__()
         self.subparser = subparser
         self.minimum = minimum

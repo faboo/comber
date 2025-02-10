@@ -59,12 +59,12 @@ Operator  Method       Current use
 ~         __invert__   optional
 not       __not__
 -         __neg__
-+         __pos__
++         __pos__      zero or more
 
 And:
 
-========  =====
-Method    Current Use
-========  =====
+========  =========  =====
+Operator  Method     Current Use
+========  =========  =====
 
-__call__  parse a string
+()        __call__   parse a string

@@ -60,6 +60,14 @@ def test_optional():
     assert repeated.maximum == parser.maximum 
     assert repeated.separator == parser.separator
 
+def test_zero_or_more():
+    parser = +Lit('foo')
+    repeated = Repeat(Lit('foo'), 0, inf, None)
+    assert repeated.subparser == parser.subparser
+    assert repeated.minimum == parser.minimum
+    assert repeated.maximum == parser.maximum 
+    assert repeated.separator == parser.separator
+
 def test_repeat():
     parser = Lit('foo')[1]
     repeated = Repeat(Lit('foo'), 1, None, None)
