@@ -41,7 +41,7 @@ is not    is_not
 -         __sub__
 %         __mod__
 *         __mul__
-**        __pow__
+**        __pow__         zero or more, with provided separator
 /         __truediv__
 //        __floordiv__
 &         __and__

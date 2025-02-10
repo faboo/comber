@@ -44,7 +44,11 @@ class Combinator(Parser, ABC):
     def __pos__(self) -> 'Combinator':
         return Repeat(self, 0, inf, None)
 
+    def __pow__(self, separator:Parseable) -> Parseable:
+        return Repeat(self, 0, inf, separator)
+
     def simplify(self) -> 'Combinator':
+        """ Return a simplified version of the combinator """
         return self
 
     def analyze(self) -> None:
@@ -218,7 +222,7 @@ class Choice(Combinator):
                         state = state.popState()
                     bestState = state
                     break
-                except ParseError as ex:
+                except ParseError:
                     continue
 
         return bestState
@@ -243,7 +247,12 @@ class Repeat(Combinator):
     """
     compound = True
 
-    def __init__(self, subparser:Combinator, minimum:int, maximum:Optional[int|float], separator:Optional[Parseable]) -> None:
+    def __init__(self,
+            subparser:Combinator,
+            minimum:int,
+            maximum:Optional[int|float],
+            separator:Optional[Parseable]
+            ) -> None:
         super().__init__()
         self.subparser = subparser
         self.minimum = minimum
@@ -332,6 +341,7 @@ class CClass(Combinator):
     def recognize(self, state:State) -> Optional[State]:
         return state
 
+    #pylint: disable=signature-differs
     def __call__(self, arg:Parseable) -> Id:#type:ignore
         return Id(arg)
 

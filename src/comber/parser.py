@@ -1,7 +1,7 @@
 """
 Base parser definitions.
 """
-from typing import cast, Optional, Callable, Any
+from typing import Optional, Callable, Any
 from abc import abstractmethod
 
 
@@ -196,6 +196,7 @@ class ParseError(Exception):
 
     @property
     def message(self) -> str:
+        """ A lazy version of the exception message. """
         return str(self.line)+":"+str(self.char)+": " \
             +"Unexpected text: " \
             +self.text[0:10] \

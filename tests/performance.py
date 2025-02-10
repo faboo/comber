@@ -13,10 +13,10 @@ constant = (string | floating | integer)@'constant'
 boolean = C+ '!' + expression
 variable = symbol
 objectRef = (expression + '.' + symbol)@'reference'
-array = (C+ '[' + expression[0, inf, ','] + ']')@'array'
-closure = (C+ '\\' + symbol[0, inf, ','] + '.' + expression)@'closure'
-dictObject = (C+ '{' + (symbol + ':' + expression)[0, inf, ','] + '}')@'dict'
-call = expression + '(' + (symbol + ':' + expression)[0, inf, ','] + ')'
+array = (C+ '[' + expression**',' + ']')@'array'
+closure = (C+ '\\' + symbol**',' + '.' + expression)@'closure'
+dictObject = (C+ '{' + (symbol + ':' + expression)**',' + '}')@'dict'
+call = expression + '(' + (symbol + ':' + expression)**',' + ')'
 opcall = expression + operator + expression
 tryex = C+ 'try' + expression
 subscript = expression + '[' + expression + ']'
@@ -59,6 +59,6 @@ def parseArray():
         grammar.analyze()
     for _ in range(0, 20):
         grammar('[]')
-        grammar('["foo", true, -3, 3.14, false, 17.43]')
+        grammar('["foo", true, -3 + 2, 3.14, false, 17.43]')
 
 parseArray()
