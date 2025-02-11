@@ -44,7 +44,7 @@ class Combinator(Parser, ABC):
     def __pos__(self) -> 'Combinator':
         return Repeat(self, 0, inf, None)
 
-    def __pow__(self, separator:Parseable) -> Parseable:
+    def __mul__(self, separator:Parseable) -> Parseable:
         return Repeat(self, 0, inf, separator)
 
     def simplify(self) -> 'Combinator':
@@ -120,6 +120,7 @@ def asCombinator(arg:Parseable) -> Combinator:
     else:
         return Lit(arg)
 
+# TODO: Make a multi-parser parent of Seq and Choice
 
 class Seq(Combinator):
     """
@@ -131,7 +132,8 @@ class Seq(Combinator):
         super().__init__()
         self.subparsers:tuple[Combinator, ...]
 
-        if isinstance(left, Seq):
+# TODO: this doesn't flatten the rhs
+        if isinstance(left, Seq) and not left.intern:
             subparsers = list(left.subparsers)
             subparsers.append(asCombinator(right))
             self.subparsers = tuple(subparsers)
@@ -186,7 +188,7 @@ class Choice(Combinator):
         super().__init__()
         self.subparsers:tuple[Combinator, ...]
 
-        if isinstance(left, Choice):
+        if isinstance(left, Choice) and not left.intern:
             subparsers = list(left.subparsers)
             subparsers.append(asCombinator(right))
             self.subparsers = tuple(subparsers)

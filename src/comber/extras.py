@@ -76,6 +76,7 @@ class delayed(Combinator):
     A placeholder parser that can be filled in later with another parser.
     Useful for recusive definitions.
     """
+    recurse = False
     compound = True
 
     def __init__(self) -> None:

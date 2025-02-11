@@ -423,7 +423,8 @@ disable=raw-checker-failed,
         too-few-public-methods,
         unsupported-binary-operation,
         too-many-arguments,
-        too-many-positional-arguments
+        too-many-positional-arguments,
+        fixme
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option

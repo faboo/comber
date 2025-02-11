@@ -12,6 +12,8 @@ dependencies = [
 
 
 [tool.setuptools]
+[tool.setuptools.package-data]
+comber = ["py.typed"]
 
 [build-system]
 requires = ["setuptools>=43.0.0", "wheel"]

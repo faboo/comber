@@ -191,9 +191,13 @@ class ParseError(Exception):
     def __init__(self, state:State, parser:'Parser') -> None:
         super().__init__('Unexpected text')
         self.line = state.line
+        """ The input line the error occurred at. """
         self.char = state.char
+        """ The character offset into the line the error occurred at. """
         self.text = state.text
+        """ The unparsed input text. """
         self.parser = parser
+        """ The parser that failed. """
 
     @property
     def message(self) -> str:
@@ -211,11 +215,6 @@ class ParseError(Exception):
 class EndOfInputError(ParseError):
     """
     When we reach the end of input before completing a full parse.
-    """
-
-class ShiftShiftConflict(ParseError):
-    """
-    When we encounter a shift-shift conflict
     """
 
 
@@ -259,6 +258,7 @@ class Parser:
         if self.intern:
             state.pushBranch()
 
+        #TODO: I think we only need to do this for delayed()
         if not self.recurse:
             state.pushParser(self)
 

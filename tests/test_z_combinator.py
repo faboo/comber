@@ -69,7 +69,7 @@ def test_zero_or_more():
     assert repeated.separator == parser.separator
 
 def test_zero_or_more():
-    parser = Lit('foo')**','
+    parser = Lit('foo')*','
     repeated = Repeat(Lit('foo'), 0, inf, ',')
     assert repeated.subparser == parser.subparser
     assert repeated.minimum == parser.minimum
