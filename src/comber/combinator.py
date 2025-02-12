@@ -226,7 +226,6 @@ class Choice(Combinator):
                     break
                 except ParseError:
                     continue
-
         return bestState
 
     def __or__(self, right:Parseable) -> Parseable:

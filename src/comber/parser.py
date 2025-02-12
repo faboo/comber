@@ -22,18 +22,6 @@ class Expect:
         """
         self._recurseStack[-1].pop()
 
-    def shiftParser(self) -> None:
-        """
-        Create a new parser stack because we're looking for the element in a sequence
-        """
-        self._recurseStack.append([])
-
-    def unshiftParser(self) -> None:
-        """
-        Toss out the current parser stack.
-        """
-        self._recurseStack.pop()
-
     def inRecursion(self, parser:Any) -> bool:
         """
         See if we're already trying to parse a given parser.
@@ -76,14 +64,14 @@ class State:
         """
         if self._whitespace:
             text = self.text.lstrip(self._whitespace)
-            eaten = self.text[0:len(text)]
+            eaten = self.text[0:len(self.text) - len(text)]
             lines = eaten.count('\n')
             self.text = text
             self.line += lines
             self.char = \
                 len(eaten) - (eaten.rfind('\n') + 1) \
                 if lines \
-                else len(eaten)
+                else self.char + len(eaten)
             self.eof = not self.text
 
     def consume(self, length:int) -> None:
@@ -95,7 +83,7 @@ class State:
 
         if self._whitespace:
             stripped = self.text.lstrip(self._whitespace)
-            eaten = text + self.text[0:len(stripped)]
+            eaten = text + self.text[0:len(self.text) - len(stripped)]
             self.text = stripped
 
         lines = eaten.count('\n')
@@ -104,7 +92,7 @@ class State:
         self.char = \
             length - (eaten.rfind('\n') + 1) \
             if lines \
-            else length
+            else self.char + length
 
         self._tree[-1].append(text)
         self.eof = not self.text
@@ -258,15 +246,15 @@ class Parser:
         if self.intern:
             state.pushBranch()
 
-        #TODO: I think we only need to do this for delayed()
         if not self.recurse:
             state.pushParser(self)
 
         try:
             newState = self.recognize(state)
         except ParseError:
-            if not self.recurse:
-                state.popParser(self)
+            # Nothing that Can recurse will actually throw
+            #if not self.recurse:
+            state.popParser(self)
             raise
 
         if newState is None:

@@ -20,6 +20,12 @@ def test_parse_exact():
     with pytest.raises(ParseError):
         parser('foo')
 
+def test_parse_minimum_separator():
+    parser = Repeat(Lit('foo'), 2, None, ',')
+    state = parser('foo, foo')
+    assert state.text == ''
+    assert state.tree == ['foo', ',', 'foo']
+
 def test_parse_optional():
     parser = Repeat(Lit('foo'), 0, 1, None)
     state = parser('foo')
