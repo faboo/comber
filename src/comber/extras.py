@@ -1,7 +1,7 @@
 """
 Additional non-core parsers.
 """
-from typing import Iterable, List, Optional, Any
+from typing import Iterable, List, Optional
 import re
 from .parser import State, Expect
 from .combinator import Combinator, asCombinator
@@ -27,9 +27,6 @@ class cs(Combinator):
                 return state
 
         return None
-
-    def __eq__(self, right:Any) -> bool:
-        return isinstance(right, cs) and right.string == self.string
 
     def __hash__(self) -> int:
         return hash(self.string)

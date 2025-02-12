@@ -9,6 +9,9 @@ def test_create():
 def test_expect():
     assert ['/foo/'] == rs('foo').expectCore()
 
+def test_rs_repr():
+    assert str(rs('foo')) == 'rs(foo)'
+
 def test_parse():
     parser = rs('[_a-z][a-z]*')
 

@@ -273,9 +273,6 @@ class Repeat(Combinator):
             state = self.subparser.parseCore(state)
             parsed += 1
 
-        if parsed < self.minimum:
-            return None
-
         if self.maximum is not None:
             while parsed < self.maximum:
                 try:
@@ -303,7 +300,7 @@ class Repeat(Combinator):
         return self._hash
 
     def repr(self) -> str:
-        return f'Repeat({self.subparser}, {self.minimum}, {self.maximum})'
+        return f'Repeat({self.subparser}, {self.minimum}, {self.maximum}, {self.separator})'
 
 
 class Id(Combinator):

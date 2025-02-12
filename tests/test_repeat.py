@@ -7,6 +7,10 @@ def test_create():
     assert 0 == parser.minimum
     assert 1 == parser.maximum
 
+def test_repeat_repr():
+    assert str(Repeat(Lit('foo'), 0, 1, ',')) == \
+        'Repeat(Lit(foo), 0, 1, Lit(,))'
+
 def test_expect():
     parser = Repeat(Lit('foo'), 0, 1, None)
     assert ['foo'] == parser.expectCore()
@@ -25,6 +29,9 @@ def test_parse_minimum_separator():
     state = parser('foo, foo')
     assert state.text == ''
     assert state.tree == ['foo', ',', 'foo']
+
+    with pytest.raises(ParseError):
+        parser('foo')
 
 def test_parse_optional():
     parser = Repeat(Lit('foo'), 0, 1, None)

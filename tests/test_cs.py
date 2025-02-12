@@ -8,6 +8,9 @@ def test_create():
 def test_expect():
     assert set(['f', 'o']) == set(cs('foo').expectCore())
 
+def test_cs_repr():
+    assert str(cs('f')) == "cs(('f',))"
+
 def test_parse():
     parser = cs(' \n')
     parser.whitespace = None
