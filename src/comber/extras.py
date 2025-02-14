@@ -68,7 +68,7 @@ class rs(Combinator):
 
 
 #pylint: disable=invalid-name
-class delayed(Combinator):
+class defer(Combinator):
     """
     A placeholder parser that can be filled in later with another parser.
     Useful for recusive definitions.
@@ -83,10 +83,10 @@ class delayed(Combinator):
     @property
     def coreparser(self) -> Combinator:
         """
-        The parser this delayed parser is the stand-in for.
+        The parser this defer parser is the stand-in for.
         """
         if self._coreparser is None:
-            message = 'Unfulfilled delay parser'
+            message = 'Unfulfilled defer parser'
             if self.name:
                 message += f' ({self.name})'
             #pylint: disable=broad-exception-raised
@@ -96,7 +96,7 @@ class delayed(Combinator):
 
     def fill(self, coreparser:Combinator) -> None:
         """
-        Fill in the parser for this delayed parser.
+        Fill in the parser for this deferred parser.
         """
         self._coreparser = asCombinator(coreparser)
 
@@ -104,7 +104,7 @@ class delayed(Combinator):
         return self.coreparser.expect(state)
 
     def recognize(self, state:State) -> Optional[State]:
-        raise NotImplementedError('Delayed parsers have no recogizer')
+        raise NotImplementedError('Deferred parsers have no recogizer')
 
     def parseCore(self, state:State) -> State:
         return self.coreparser.parseCore(state)
@@ -117,5 +117,5 @@ class delayed(Combinator):
         return hash(id(self))
 
     def repr(self) -> str:
-        return f'delayed({self._coreparser})'
+        return f'defer({self._coreparser})'
 

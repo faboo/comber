@@ -45,8 +45,11 @@ class State:
         self.text = text
         """ Unparsed input """
         self.line = line
+        """ Current line offset into the input text (starts at 1) """
         self.char = char
+        """ Current character offset into the current line (starts at 1) """
         self.eof = False
+        """ True if we have it the end of the text """
         self._tree:list[list] = tree if tree is not None else [[]]
         self._recurseStack:list[set[int]] = recurseStack if recurseStack is not None else [set()]
         self._whitespace = whitespace
@@ -206,9 +209,9 @@ class EndOfInputError(ParseError):
     """
 
 
-Intern = Callable[[list[Any]], Any]
+Emitter = Callable[[list[Any]], Any]
 """
-Type of internalizer functions.
+Type of emitter functions.
 """
 
 
@@ -225,7 +228,7 @@ class Parser:
     def __init__(self) -> None:
         self.name:Optional[str] = None
         """ Friendly name of this sub-parser """
-        self.intern:Optional[Intern] = None
+        self.emit:Optional[Emitter] = None
         """ Internalizer function; if not provided, the result will be the parsed string """
         self.whitespace:str|None = ' \t\n'
         """ Default whitespace """
@@ -243,7 +246,7 @@ class Parser:
         """
         Internal parse function, for calling by subparsers.
         """
-        if self.intern:
+        if self.emit:
             state.pushBranch()
 
         if not self.recurse:
@@ -266,8 +269,8 @@ class Parser:
         if not self.recurse:
             newState.popParser(self)
 
-        if self.intern is not None:
-            value = self.intern(newState.popBranch())
+        if self.emit is not None:
+            value = self.emit(newState.popBranch())
             newState.pushLeaf(value)
 
         return newState

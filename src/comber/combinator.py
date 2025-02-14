@@ -5,7 +5,7 @@ from typing import cast, Optional, Tuple, List, Union, Any
 import weakref
 from math import inf
 from abc import ABC
-from .parser import Parser, State, Expect, Intern, ParseError
+from .parser import Parser, State, Expect, Emitter, ParseError
 
 Parseable = Union['Combinator', str]
 
@@ -13,16 +13,18 @@ class Combinator(Parser, ABC):
     """
     Combinator definitions.
     """
-    def __matmul__(self, arg:Union[str, Tuple[str, Intern]]) -> 'Combinator':
+    def __matmul__(self, arg:Union[str, Emitter, Tuple[str, Emitter]]) -> 'Combinator':
         if isinstance(arg, str):
             self.name = arg
+        elif callable(arg):
+            self.emit = arg
         elif isinstance(arg, tuple):
             self.name = arg[0]
-            self.intern = arg[1]
+            self.emit = arg[1]
         else:
             raise TypeError(
-                'Expected name or name-internalizer tuple, e.g. '\
-                'combinator@"name" or combinator@("name, lambda x: int(x)"')
+                'Expected name or name-emitter tuple, e.g. '\
+                'combinator@"name", combinator@lambda x: int(x), or combinator@("name, lambda x: int(x)"')
 
         return self
 
@@ -133,7 +135,7 @@ class Seq(Combinator):
         self.subparsers:tuple[Combinator, ...]
 
 # TODO: this doesn't flatten the rhs
-        if isinstance(left, Seq) and not left.intern:
+        if isinstance(left, Seq) and not left.emit:
             subparsers = list(left.subparsers)
             subparsers.append(asCombinator(right))
             self.subparsers = tuple(subparsers)
@@ -188,7 +190,7 @@ class Choice(Combinator):
         super().__init__()
         self.subparsers:tuple[Combinator, ...]
 
-        if isinstance(left, Choice) and not left.intern:
+        if isinstance(left, Choice) and not left.emit:
             subparsers = list(left.subparsers)
             subparsers.append(asCombinator(right))
             self.subparsers = tuple(subparsers)

@@ -12,9 +12,9 @@ For instance, we could define a simple grammar for calling functions on integer 
     
     keyword = rs(r'[_a-zA-Z][_a-zA-Z0-9]*')@('keyword')
     number = rs(r'[0-9]+')@('number', int)
-    value = keyword | number
     package = keyword[1, inf, ',']
     import_statement = C+ 'import' + package
+    value = keyword | number
     function_call = keyword + '(' + value**',' + ')'
     assignment = C+ 'let' + keyword + '=' + (function_call | value)
     grammar = (import_statement | assignment | function_call)[0, inf]
@@ -38,7 +38,7 @@ To use our parser, we simply pass a string to it:
     code = "add(17, 3)"
     try:
         parseState = grammar(code)
-        print(f'Parsed tokens: {parseState.tree}')
+        print('Parsed tokens: %s' % parseState.tree)
     except ParseError as ex:
         print(ex)
 
@@ -184,7 +184,7 @@ Or, with a separator:
 
 .. code-block:: python
 
-    keyword[0, None, ',']
+    keyword[10, None, ',']
 
 Infinity - `math.inf` - is a valid maximum value. For convenience, it can be imported directly from Comber:
 
@@ -196,7 +196,7 @@ Infinity - `math.inf` - is a valid maximum value. For convenience, it can be imp
 
 There are several convenience combinators for common types of repetition.
 
-For zero or more with a separator, using `**`:
+For zero or more with a separator, using `*`:
 
 .. code-block:: python
 
@@ -218,10 +218,75 @@ You can declare a parser as *optional* with `~`:
 Recursive Grammars
 ------------------
 
+Consider a program in our toy grammar::
+
+    let word = exp(2, 16)
+    let maxint = minus(word, 1)
+
+It'd be nice to simplify this by eliminating the variable "word" and pass the exp() call directly to minus(), but to
+allow that, we need to extend our grammar to consider a function call to be a value so we can use one as a function
+argument. But to do that, we'd need to use `function_call` in our definition of `value` - but `function_call` likewise
+needs to reference `value`.
+
+To solve this issue, we can define one of them as `defer`.
+
+.. code-block:: python
+
+    from comber import C, rs, inf, defer
+
+    ...
+
+    value = defer()
+    function_call = keyword + '(' + value**',' + ')'
+    value.fill(keyword | number | function_call)
+
+This way, we can refer to `value` wherever we want, and only define its meaning when we're ready. We can safely build
+fairly complex grammars this way, but be wary of performance.
 
 ====================
 Building Parse Trees
 ====================
+
+When you call a parser on a some text, they return a `State` object containing the resultant parse tree (`State.tree`).
+
+By default, Comber parsers output a "flat" tree - a list of strings parsed by the "leaf" parsers (i.e. string literals,
+`rs`, and `cs`).
+
+To build a more useful parse tree, you have to provide *emitters*. Our toy grammar contains a simple one that converts
+integers in the input to Python `int` values:
+
+.. code-block:: Python
+
+   number = rs(r'[0-9]+')@('number', int)
+
+So if we ran our parser on the input "let foo = 5" the resulting state's `tree` property would be `["let", "foo", "=",
+5]`. But it'd be more useful if it resulted in some kind of "let" object (that could execute the assignment, or be fed
+to a VM, or whatever else). We could define one we can use as a emitter for our let statement like this:
+
+.. code-block:: Python
+
+    class Let:
+        def __init__(self, let, variable, eq, value):
+            self.variable = variable
+            self.value = value
+            # We can ignore `let` and `eq` (which will always contain "let" and "=", respectively).
+
+        def __repr__(self):
+            return f'Let({self.variable}, {self.value})'
+
+and redefine the assignment rule like:
+
+.. code-block:: Python
+
+    assignment = (C+ 'let' + keyword + '=' + (function_call | value))@Let
+
+Now if rerun the parser on "let foo = 5", we get `[Let(foo, 5)]`.
+
+As we did with number, you can also combine an emitter with a name, to improve error messages:
+
+.. code-block:: Python
+
+    assignment = (C+ 'let' + keyword + '=' + (function_call | value))@("assignment", Let)
 
 
 ==============
@@ -236,7 +301,6 @@ Pitfalls
 
 Under the covers, Comber is essentially a recursive descent parser. It's best suited for relatively shallow grammars
 parsing small amounts of text.
-
 
 
 ====

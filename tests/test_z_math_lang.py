@@ -1,8 +1,8 @@
-from comber import C, rs, cs, delayed
+from comber import C, rs, cs, defer
 
 number = rs(r'[+-]?[0-9]+(\.[0-9]+)?')@('number')
 variable = rs(r'[_a-zA-Z][_a-zA-Z0-9]*')@('variable')
-expression = delayed()@'multiplication'
+expression = defer()@'multiplication'
 expression.fill( (C+ '(' + expression+ ')') | (expression + cs('*/+-') + expression) | number | variable)
 
 def test_math_number():
@@ -24,10 +24,6 @@ def test_math_variable():
     assert state.tree == ['foo']
 
 def test_math_multiplication():
-    #state = multiplication('1 * 2')
-    #assert state.text == ''
-    #assert state.tree == ['1', '*', '2']
-
     state = expression('1 * 2')
     assert state.text == ''
     assert state.tree == ['1', '*', '2']

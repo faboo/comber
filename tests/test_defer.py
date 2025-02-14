@@ -1,38 +1,38 @@
 import pytest
-from comber import delayed, ParseError, Lit
+from comber import defer, ParseError, Lit
 
-def test_delayed_create():
-    parser = delayed()
+def test_defer_create():
+    parser = defer()
     parser.fill('foo')
 
-def test_delayed_unfilled():
-    parser = delayed()
+def test_defer_unfilled():
+    parser = defer()
 
     with pytest.raises(Exception):
         parser('foo')
 
-    parser = delayed()@'bar'
+    parser = defer()@'bar'
 
     with pytest.raises(Exception):
         parser('foo')
 
-def test_delayed_repr():
-    parser = delayed()
+def test_defer_repr():
+    parser = defer()
 
-    assert str(parser) == 'delayed(None)'
+    assert str(parser) == 'defer(None)'
 
     parser.fill('foo')
 
-    assert str(parser) == 'delayed(Lit(foo))'
+    assert str(parser) == 'defer(Lit(foo))'
     
 
-def test_delayed_expect():
-    parser = delayed()
+def test_defer_expect():
+    parser = defer()
     parser.fill(Lit('foo'))
     assert parser.expectCore() == Lit('foo').expectCore()
 
-def test_delayed_parse():
-    parser = delayed()
+def test_defer_parse():
+    parser = defer()
     parser.fill(Lit('foo'))
 
     state = parser('foo')
@@ -42,8 +42,8 @@ def test_delayed_parse():
     with pytest.raises(ParseError):
         parser('bar')
 
-def test_delayed_recurse():
-    single = delayed()
+def test_defer_recurse():
+    single = defer()
     double = single + 'bar'
     single.fill(double | 'foo')
 

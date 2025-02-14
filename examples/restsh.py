@@ -1,6 +1,7 @@
-import sys
-import cProfile
+import pytest
 from comber import C, rs, defer, inf
+
+# This grammar is (nearly) the grammar of Restsh
 
 string = rs(r'"(\\"|[^"])*"')@('string')
 integer = rs(r'[+-]?[0-9]+')@('integer')
@@ -8,15 +9,15 @@ floating = rs(r'[+-]?[0-9]+\.[0-9]+')@('float')
 symbol = rs(r'[_a-zA-Z][_a-zA-Z0-9]*')@('symbol')
 operator = rs(r'[-+*/|&^$@?~=<>]+')@('operator')
 
-expression = defer()@('expression')
+expression = defer()
 constant = (string | floating | integer)@'constant'
 boolean = C+ '!' + expression
 variable = symbol
 objectRef = (expression + '.' + symbol)@'reference'
-array = (C+ '[' + expression*',' + ']')@'array'
-closure = (C+ '\\' + symbol*',' + '.' + expression)@'closure'
-dictObject = (C+ '{' + (symbol + ':' + expression)*',' + '}')@'dict'
-call = expression + '(' + (symbol + ':' + expression)*',' + ')'
+array = C+ '[' + expression[0, inf, ','] + ']'
+closure = C+ '\\' + symbol[0, inf, ','] + '.' + expression
+dictObject = C+ '{' + (symbol + ':' + expression)[0, inf, ','] + '}'
+call = expression + '(' + (symbol + ':' + expression)[0, inf, ','] + ')'
 opcall = expression + operator + expression
 tryex = C+ 'try' + expression
 subscript = expression + '[' + expression + ']'
@@ -35,9 +36,9 @@ block = expression[1, inf, ';']
 expression.fill(
     # No start symbol
 #    block |
+    call |
     opcall |
     subscript |
-    call |
     objectRef |
 
     # Start symbol
@@ -53,12 +54,3 @@ expression.fill(
 
 grammar = describe | ext | imprt | assignment | define | expression
 
-
-def parseArray():
-    if '--analyze' in sys.argv:
-        grammar.analyze()
-    for _ in range(0, 20):
-        grammar('[]')
-        grammar('["foo", true, -3 + 2, 3.14, false, 17.43]')
-
-parseArray()
