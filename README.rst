@@ -243,13 +243,22 @@ To solve this issue, we can define one of them as `defer`.
 This way, we can refer to `value` wherever we want, and only define its meaning when we're ready. We can safely build
 fairly complex grammars this way, but be wary of performance.
 
+-----------------
+Controlling Space
+-----------------
+
+Before each subparser is run, Comber consumes leading whitespace. By default, this is spaces, tabs, and newlines. You
+can change this in two ways: set the `whitespace` property on the outermost parser to a string containing the new
+whitespace characters, or likewise passing a string as the second argument to the parser. In either case, the value
+`None` will disable the feature altogether.
+
 ====================
 Building Parse Trees
 ====================
 
 When you call a parser on a some text, they return a `State` object containing the resultant parse tree (`State.tree`).
 
-By default, Comber parsers output a "flat" tree - a list of strings parsed by the "leaf" parsers (i.e. string literals,
+By default, parsers output a "flat" tree - a list of strings parsed by the "leaf" parsers (i.e. string literals,
 `rs`, and `cs`).
 
 To build a more useful parse tree, you have to provide *emitters*. Our toy grammar contains a simple one that converts
@@ -331,8 +340,8 @@ is        _is
 is not    is_not
 \-        __sub__
 %         __mod__
-\*        __mul__
-\**       __pow__         zero or more, with provided separator
+\*        __mul__         zero or more, with provided separator
+\**       __pow__
 /         __truediv__
 //        __floordiv__
 &         __and__
