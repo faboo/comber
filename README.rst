@@ -42,7 +42,7 @@ To use our parser, we simply pass a string to it:
     except ParseError as ex:
         print(ex)
 
-The `grammar` call returns the final parser state on a successful parse, from which you can retrieve the final parse
+The ``grammar`` call returns the final parser state on a successful parse, from which you can retrieve the final parse
 tree. In our case, it is effectively a list::
 
     ['add', '(', 17, 3, ')']
@@ -66,13 +66,13 @@ If we tried to parse this, we'd get an exception like::
 Building Parsers
 ================
 
-The most basic parsers are string literals (which match exactly), `rs` for matching a regular expression, and `cs` for
+The most basic parsers are string literals (which match exactly), ``rs`` for matching a regular expression, and ``cs`` for
 matching any of the strings of an iterable.
 
-The `rs` parser can be seen in our toy grammar above. Standard Python regular expressions are supported. The entire
+The ``rs`` parser can be seen in our toy grammar above. Standard Python regular expressions are supported. The entire
 match is used as the result of the parse, regardless of groupings etc.
 
-The `cs` parse takes any iterable of strings. The first string that exactly matches (the start of) the input text. If
+The ``cs`` parse takes any iterable of strings. The first string that exactly matches (the start of) the input text. If
 none of the strings match, the parse fails. Since strings are themselves iterables, we could add addition and
 subtraction to our toy grammar like this:
 
@@ -97,20 +97,20 @@ parser that would otherwise begin with a string literal. E.g. this:
 
     'let' + keyword + '=' + (function_call | value)
 
-would actually throw a Python error because 'let' isn't *really* a parser - yet! That's where `C` comes in:
+would actually throw a Python error because 'let' isn't *really* a parser - yet! That's where ``C`` comes in:
 
 .. code-block:: python
 
     C+ 'let' + keyword + '=' + (function_call | value)
 
-`C` starts off the sequence, so we can use any combination of parsers and string literals we like from there. It works
-similarly with alternatives, so if we wanted to allow `set` to be used as a synonym for `let`, we might do:
+``C`` starts off the sequence, so we can use any combination of parsers and string literals we like from there. It works
+similarly with alternatives, so if we wanted to allow ``set`` to be used as a synonym for ``let``, we might do:
 
 .. code-block:: python
 
     (C| 'let'|'set') + keyword + '=' + (function_call | value)
 
-`C` can also be used to wrap a parser to protect it from optimization; for instance, embedding one sequence or
+``C`` can also be used to wrap a parser to protect it from optimization; for instance, embedding one sequence or
 alternative set inside another. If, for instance, we extended our grammar to allow a bare value to be a whole statement:
 
 .. code-block:: python
@@ -123,7 +123,7 @@ alternative set inside another. If, for instance, we extended our grammar to all
 Basic Combinators
 -----------------
 
-Parsers can be combined in series with `+`:
+Parsers can be combined in series with ``+``:
 
 .. code-block:: python
 
@@ -132,7 +132,7 @@ Parsers can be combined in series with `+`:
 A sequence of parsers is evaluated left to right, each consuming text before the next is evaluated. If at any point in
 the sequence a parser fails, the entire sequence fails.
 
-A set of alternatives is built with `|`:
+A set of alternatives is built with ``|``:
 
 .. code-block:: python
 
@@ -156,7 +156,7 @@ is equivalent to:
     salutation = C+ 'Hello' + firstname + lastname + '!'
 
 If you need to mantain the logical separation (to parse correctly, or maintain the name of a subparser), wrap the
-subparser with `C`:
+subparser with ``C``:
 
 .. code-block:: python
 
@@ -173,8 +173,8 @@ The most flexible option for specifying repetition is brackets:
 
     keyword[0, 10, ',']
 
-The above would parse `keyword` zero to ten times, separated by a comma. The separator is optional - without it, the
-result would simply parse `keyword` zero to ten times.
+The above would parse ``keyword`` zero to ten times, separated by a comma. The separator is optional - without it, the
+result would simply parse ``keyword`` zero to ten times.
 
 We could also specify parsing an exact number of times:
 
@@ -188,7 +188,7 @@ Or, with a separator:
 
     keyword[10, None, ',']
 
-Infinity - `math.inf` - is a valid maximum value. For convenience, it can be imported directly from Comber:
+Infinity - ``math.inf`` - is a valid maximum value. For convenience, it can be imported directly from Comber:
 
 .. code-block:: python
 
@@ -198,19 +198,19 @@ Infinity - `math.inf` - is a valid maximum value. For convenience, it can be imp
 
 There are several convenience combinators for common types of repetition.
 
-For zero or more with a separator, using `*`:
+For zero or more with a separator, using ``*``:
 
 .. code-block:: python
 
     parser*','
 
-Or zero or more without a separator, using the unary `+`:
+Or zero or more without a separator, using the unary ``+``:
 
 .. code-block:: python
 
     +parser
 
-You can declare a parser as *optional* with `~`:
+You can declare a parser as *optional* with ``~``:
 
 .. code-block:: python
 
@@ -227,10 +227,10 @@ Consider a program in our toy grammar::
 
 It'd be nice to simplify this by eliminating the variable "word" and pass the exp() call directly to minus(), but to
 allow that, we need to extend our grammar to consider a function call to be a value so we can use one as a function
-argument. But to do that, we'd need to use `function_call` in our definition of `value` - but `function_call` likewise
-needs to reference `value`.
+argument. But to do that, we'd need to use ``function_call`` in our definition of ``value`` - but ``function_call`` likewise
+needs to reference ``value``.
 
-To solve this issue, we can define one of them as `defer`.
+To solve this issue, we can define one of them as ``defer``.
 
 .. code-block:: python
 
@@ -242,7 +242,7 @@ To solve this issue, we can define one of them as `defer`.
     function_call = keyword + '(' + value**',' + ')'
     value.fill(keyword | number | function_call)
 
-This way, we can refer to `value` wherever we want, and only define its meaning when we're ready. We can safely build
+This way, we can refer to ``value`` wherever we want, and only define its meaning when we're ready. We can safely build
 fairly complex grammars this way, but be wary of performance.
 
 -----------------
@@ -250,28 +250,28 @@ Controlling Space
 -----------------
 
 Before each subparser is run, Comber consumes leading whitespace. By default, this is spaces, tabs, and newlines. You
-can change this in two ways: set the `whitespace` property on the outermost parser to a string containing the new
+can change this in two ways: set the ``whitespace`` property on the outermost parser to a string containing the new
 whitespace characters, or likewise passing a string as the second argument to the parser. In either case, the value
-`None` will disable the feature altogether.
+``None`` will disable the feature altogether.
 
 ====================
 Building Parse Trees
 ====================
 
-When you call a parser on a some text, they return a `State` object containing the resultant parse tree (`State.tree`).
+When you call a parser on a some text, they return a ``State`` object containing the resultant parse tree (``State.tree``).
 
 By default, parsers output a "flat" tree - a list of strings parsed by the "leaf" parsers (i.e. string literals,
-`rs`, and `cs`).
+``rs``, and ``cs``).
 
 To build a more useful parse tree, you have to provide *emitters*. Our toy grammar contains a simple one that converts
-integers in the input to Python `int` values:
+integers in the input to Python ``int`` values:
 
 .. code-block:: Python
 
    number = rs(r'[0-9]+')@('number', int)
 
-So if we ran our parser on the input "let foo = 5" the resulting state's `tree` property would be `["let", "foo", "=",
-5]`. But it'd be more useful if it resulted in some kind of "let" object (that could execute the assignment, or be fed
+So if we ran our parser on the input "let foo = 5" the resulting state's ``tree`` property would be ``["let", "foo", "=",
+5]``. But it'd be more useful if it resulted in some kind of "let" object (that could execute the assignment, or be fed
 to a VM, or whatever else). We could define one we can use as a emitter for our let statement like this:
 
 .. code-block:: Python
@@ -291,7 +291,7 @@ and redefine the assignment rule like:
 
     assignment = (C+ 'let' + keyword + '=' + (function_call | value))@Let
 
-Now if rerun the parser on "let foo = 5", we get `[Let(foo, 5)]`.
+Now if rerun the parser on "let foo = 5", we get ``[Let(foo, 5)]``.
 
 As we did with number, you can also combine an emitter with a name, to improve error messages:
 
@@ -306,7 +306,13 @@ Performance
 Under the covers, Comber is essentially a recursive descent parser. It's best suited for relatively shallow grammars
 parsing small amounts of text.
 
-You can gain a bit more speed by calling ``analyze()`` on the top-level/outermost parser.
+You can gain a bit more speed by calling ``analyze()`` on the top-level/outermost parser. This modifies the parser (and
+subparsers) in place:
+
+.. code-block:: Python
+
+    grammar.analyze()
+    grammar('max(1, 4)'
 
 
 ====

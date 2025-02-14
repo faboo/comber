@@ -1,22 +1,41 @@
 [project]
 name = "comber"
-version = "0.0.1"
+version = "1.0.0"
+authors = [
+    { name="Ray Wallace III", email="rwallace3@proton.me" },
+]
 description = "Parser combinator library with a BNF-esque interface"
 requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU Lesser General Public License v2 (LGPLv2)",
+    "Topic :: Software Development :: Compilers",
+    "Topic :: Text Processing",
+    "Typing :: Typed",
+]
 readme = "README.rst"
 license = {file = "LICENSE.txt"}
+keywords = ["parser", "combinator", "parsing", "compiler"]
 dependencies = [
 ]
 
-[project.scripts]
+[project.urls]
+Homepage = "https://github.com/faboo/comber"
+Repository = "https://github.com/faboo/comber.git"
 
+[project.optional-dependencies]
+dev = [
+    "tox"
+]
 
 [tool.setuptools]
 [tool.setuptools.package-data]
 comber = ["py.typed"]
 
 [build-system]
-requires = ["setuptools>=43.0.0", "wheel"]
+requires = ["setuptools>=61.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 
