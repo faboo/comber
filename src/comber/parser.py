@@ -124,15 +124,16 @@ class State:
         """
         stack = list(self._recurseStack)
         stack[-1] = set(stack[-1])
+        tree = list(self._tree)
+        tree.append([])
         state = State(
             self.text,
             self._whitespace,
             self.line,
             self.char,
-            list(self._tree),
+            tree,
             stack
             )
-        state.pushBranch()
 
         return state
 
@@ -191,13 +192,18 @@ class ParseError(Exception):
         """ The parser that failed. """
 
     @property
+    def expected(self) -> list[str]:
+        """ The possible next tokens """
+        return list(set(self.parser.expectCore()))
+
+    @property
     def message(self) -> str:
         """ A lazy version of the exception message. """
         return str(self.line)+":"+str(self.char)+": " \
-            +"Unexpected text: " \
+            +'Unexpected text: ' \
             +self.text[0:10] \
-            +". Expected one of: " \
-            +", ".join(list(set(self.parser.expectCore())))
+            +'. Expected one of: ' \
+            +', '.join(self.expected)
 
     def __str__(self) -> str:
         return self.message
@@ -207,6 +213,11 @@ class EndOfInputError(ParseError):
     """
     When we reach the end of input before completing a full parse.
     """
+
+    @property
+    def message(self) -> str:
+        return 'Unexpected end of input. Expected one of: ' \
+            +', '.join(self.expected)
 
 
 Emitter = Callable[[list[Any]], Any]

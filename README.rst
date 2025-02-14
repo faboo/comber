@@ -56,6 +56,8 @@ If we tried to parse this, we'd get an exception like::
     1:12: Unexpected Text: "Here's som. Expected one of: @keyword, @number
 
 
+----------
+
 .. contents:: Contents
    :depth: 3
 
@@ -297,19 +299,14 @@ As we did with number, you can also combine an emitter with a name, to improve e
 
     assignment = (C+ 'let' + keyword + '=' + (function_call | value))@("assignment", Let)
 
-
-==============
-Error Handling
-==============
-
-
-
-========
-Pitfalls
-========
+===========
+Performance
+===========
 
 Under the covers, Comber is essentially a recursive descent parser. It's best suited for relatively shallow grammars
 parsing small amounts of text.
+
+You can gain a bit more speed by calling ``analyze()`` on the top-level/outermost parser.
 
 
 ====
