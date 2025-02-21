@@ -55,8 +55,22 @@ If we tried to parse this, we'd get an exception like::
 
     1:12: Unexpected Text: "Here's som. Expected one of: @keyword, @number
 
-
 ----------
+Installing
+----------
+
+You can get the latest release from pip::
+
+    $ pip install comber
+
+or from the source::
+
+    $ pip install .
+
+
+=============
+Documentation
+=============
 
 .. contents:: Contents
    :depth: 3
