@@ -81,7 +81,7 @@ class defer(Combinator):
         self._coreparser:Optional[Combinator] = None
 
     @property
-    def coreparser(self) -> Combinator:
+    def subparser(self) -> Combinator:
         """
         The parser this defer parser is the stand-in for.
         """
@@ -101,16 +101,16 @@ class defer(Combinator):
         self._coreparser = asCombinator(coreparser)
 
     def expect(self, state:Expect) -> List[str]:
-        return self.coreparser.expect(state)
+        return self.subparser.expect(state)
 
-    def recognize(self, state:State) -> Optional[State]:
+    def recognize(self, state:State) -> State|None:
         raise NotImplementedError('Deferred parsers have no recogizer')
 
     def parseCore(self, state:State) -> State:
-        return self.coreparser.parseCore(state)
+        return self.subparser.parseCore(state)
 
     def simplify(self) -> Combinator:
-        return self.coreparser
+        return self.subparser
 
     def __hash__(self) -> int:
         # Where we care about this, we care about literal identity

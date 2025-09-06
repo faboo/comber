@@ -54,6 +54,7 @@ class State:
         self._tree:list[list] = tree if tree is not None else [[]]
         self._recurseStack:list[set[int]] = recurseStack if recurseStack is not None else [set()]
         self._whitespace = whitespace
+        self._parent:State|None = None
 
     @property
     def tree(self) -> list:
@@ -62,6 +63,15 @@ class State:
         """
         return self._tree[0]
 
+    def advance(self, text:str) -> None:
+        lines = text.count('\n')
+
+        self.line += lines
+        self.char = \
+            length - (text.rfind('\n') + 1) \
+            if lines \
+            else self.char + len(text)
+
     def eatWhite(self) -> None:
         """
         Consume the leading whitespace, if whitespace was defined.
@@ -69,13 +79,9 @@ class State:
         if self._whitespace:
             text = self.text.lstrip(self._whitespace)
             eaten = self.text[0:len(self.text) - len(text)]
-            lines = eaten.count('\n')
             self.text = text
-            self.line += lines
-            self.char = \
-                len(eaten) - (eaten.rfind('\n') + 1) \
-                if lines \
-                else self.char + len(eaten)
+
+            self.advance(eaten)
             self.eof = not self.text
 
     def consume(self, length:int) -> None:
@@ -90,13 +96,7 @@ class State:
             eaten = text + self.text[0:len(self.text) - len(stripped)]
             self.text = stripped
 
-        lines = eaten.count('\n')
-
-        self.line += lines
-        self.char = \
-            length - (eaten.rfind('\n') + 1) \
-            if lines \
-            else self.char + length
+        self.advance(eaten)
 
         self._tree[-1].append(text)
         self.eof = not self.text
@@ -135,6 +135,7 @@ class State:
             tree,
             stack
             )
+        state._parent = self
 
         return state
 
@@ -142,9 +143,15 @@ class State:
         """
         Collapse an extended state.
         """
-        popped = self._tree.pop()
-        self._tree[-1] += popped
-        return self
+        state = self._parent
+
+        state.text = self.text
+        state.line = self.line
+        state.char = self.char
+        state.eof = self.eof
+        state._tree[-1] += self._tree[-1]
+
+        return state
 
     def pushParser(self, parser:'Parser') -> None:
         """
@@ -160,7 +167,7 @@ class State:
 
     def shiftParser(self) -> None:
         """
-        Create a new parser stack because we're looking for the element in a sequence
+        Create a new recursion stack because we're looking for the element in a sequence
         """
         self._recurseStack.append(set())
 

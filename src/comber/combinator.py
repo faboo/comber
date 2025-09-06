@@ -24,7 +24,7 @@ class Combinator(Parser, ABC):
         else:
             raise TypeError(
                 'Expected name or name-emitter tuple, e.g. '\
-                'combinator@"name", combinator@lambda x: int(x), or combinator@("name, lambda x: int(x)"')
+                'combinator@"name", combinator@lambda x: int(x), or combinator@("name", lambda x: int(x)')
 
         return self
 
