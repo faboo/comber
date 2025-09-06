@@ -220,10 +220,10 @@ class Choice(Combinator):
                     else:
                         trialState = state
 
-                    state = parser.parseCore(trialState)
+                    trialState = parser.parseCore(trialState)
 
-                    if parser.compound:
-                        state = state.popState()
+                    if state != trialState:
+                        state = trialState.popState()
                     bestState = state
                     break
                 except ParseError:

@@ -3,6 +3,7 @@ Base parser definitions.
 """
 from typing import Optional, Callable, Any
 from abc import abstractmethod
+import re
 
 
 class Expect:
@@ -141,7 +142,7 @@ class State:
         """
         Collapse an extended state.
         """
-        popped = self.popBranch()
+        popped = self._tree.pop()
         self._tree[-1] += popped
         return self
 
