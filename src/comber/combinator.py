@@ -150,7 +150,7 @@ class Seq(Combinator):
     def expect(self, state:Expect) -> List[str]:
         return self.subparsers[0].expectCore(state)
 
-    def recognize(self, state:State) -> Optional[State]:
+    def recognize(self, state:State) -> State|None:
         first = True
         for parser in self.subparsers:
             try:

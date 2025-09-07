@@ -41,7 +41,7 @@ class State:
             line:int = 1,
             char:int = 1,
             tree:list[list]|None = None,
-            recurseStack:list[set[int]]|None = None,
+            recurseStack:list[list[int]]|None = None,
             ) -> None:
         self.text = text
         """ Unparsed input """
@@ -52,7 +52,7 @@ class State:
         self.eof = False
         """ True if we have it the end of the text """
         self._tree:list[list] = tree if tree is not None else [[]]
-        self._recurseStack:list[set[int]] = recurseStack if recurseStack is not None else [set()]
+        self._recurseStack:list[list[int]] = recurseStack if recurseStack is not None else [[]]
         self._whitespace = whitespace
         self._parent:State|None = None
 
@@ -124,7 +124,7 @@ class State:
         Extend this state.
         """
         stack = list(self._recurseStack)
-        stack[-1] = set(stack[-1])
+        stack[-1] = list(stack[-1])
         tree = list(self._tree)
         tree.append([])
         state = State(
@@ -157,19 +157,19 @@ class State:
         """
         Push the current parser.
         """
-        self._recurseStack[-1].add(id(parser))
+        self._recurseStack[-1].append(id(parser))
 
     def popParser(self, parser:'Parser') -> None:
         """
         Pop the last parser.
         """
-        self._recurseStack[-1].remove(id(parser))
+        self._recurseStack[-1].pop()
 
     def shiftParser(self) -> None:
         """
         Create a new recursion stack because we're looking for the element in a sequence
         """
-        self._recurseStack.append(set())
+        self._recurseStack.append([])
 
     def unshiftParser(self) -> None:
         """
