@@ -326,7 +326,7 @@ subparsers) in place:
 .. code-block:: Python
 
     grammar.analyze()
-    grammar('max(1, 4)'
+    grammar('max(1, 4)')
 
 
 ====
