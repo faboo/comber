@@ -16,7 +16,7 @@ classifiers = [
     "Typing :: Typed",
 ]
 readme = "README.rst"
-license = {file = "LICENSE.txt"}
+license-files = [ "LICENSE.txt" ]
 keywords = ["parser", "combinator", "parsing", "compiler"]
 dependencies = [
 ]

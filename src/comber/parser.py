@@ -1,9 +1,8 @@
 """
 Base parser definitions.
 """
-from typing import Optional, Callable, Any
+from typing import cast, Optional, Callable, Any
 from abc import abstractmethod
-import re
 
 
 class Expect:
@@ -64,11 +63,12 @@ class State:
         return self._tree[0]
 
     def advance(self, text:str) -> None:
+        """ Advance current line and char based on a chunk of text """
         lines = text.count('\n')
 
         self.line += lines
         self.char = \
-            length - (text.rfind('\n') + 1) \
+            len(text) - (text.rfind('\n') + 1) \
             if lines \
             else self.char + len(text)
 
@@ -135,7 +135,7 @@ class State:
             tree,
             stack
             )
-        state._parent = self
+        state._parent = self #pylint: disable=protected-access
 
         return state
 
@@ -143,13 +143,13 @@ class State:
         """
         Collapse an extended state.
         """
-        state = self._parent
+        state = cast(State, self._parent) #pylint: disable=protected-access
 
         state.text = self.text
         state.line = self.line
         state.char = self.char
         state.eof = self.eof
-        state._tree[-1] += self._tree[-1]
+        state._tree[-1] += self._tree[-1] #pylint: disable=protected-access
 
         return state
 
@@ -159,6 +159,7 @@ class State:
         """
         self._recurseStack[-1].append(id(parser))
 
+    #pylint: disable=unused-argument
     def popParser(self, parser:'Parser') -> None:
         """
         Pop the last parser.

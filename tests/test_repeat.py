@@ -78,6 +78,18 @@ def test_parse_inf():
     assert state.text == 'barfoo'
     assert state.tree == ['foo', 'foo']
 
+def test_parse_compound():
+    parser = Repeat(C + 'foo' + 'bar', 0, 1, None)
+    state = parser('foo bar')
+    assert state.text == ''
+    assert state.tree == ['foo', 'bar']
+
+def test_parse_compound_seperator():
+    parser = Repeat(Lit('foo'), 0, inf, C | ',' | ';')
+    state = parser('foo ; foo')
+    assert state.text == ''
+    assert state.tree == ['foo', ';', 'foo']
+
 def test_parse_bracketed():
     parser = C + '[' + Lit('foo')[0, inf, None] + ']'
 

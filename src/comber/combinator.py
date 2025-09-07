@@ -153,15 +153,26 @@ class Seq(Combinator):
     def recognize(self, state:State) -> State|None:
         first = True
         for parser in self.subparsers:
-            try:
-                if not first:
-                    state.shiftParser()
-                state = parser.parseCore(state)
-            finally:
+            if not first:
+                state.shiftParser()
+
+            if parser.compound:
+                try:
+                    state = parser.parseCore(state)
+                finally:
+                    if not first:
+                        state.unshiftParser()
+            else:
+                newState = parser.recognize(state)
                 if not first:
                     state.unshiftParser()
-                else:
-                    first = False
+
+                if newState is None:
+                    return None
+
+                state = newState
+
+            first = False
 
         return state
 
@@ -209,25 +220,28 @@ class Choice(Combinator):
               for string in subparser.expectCore(state)
             ]
 
-    def recognize(self, state:State) -> Optional[State]:
+    def recognize(self, state:State) -> State|None:
         bestState:State|None = None
         
         for parser in self.subparsers:
             if not state.inRecursion(parser):
-                try:
-                    if parser.compound:
-                        trialState = state.pushState()
-                    else:
-                        trialState = state
+                trialState:State|None
 
-                    trialState = parser.parseCore(trialState)
+                if parser.compound:
+                    trialState = state.pushState()
 
+                    try:
+                        trialState = parser.parseCore(trialState)
+                    except ParseError:
+                        continue
+                else:
+                    trialState = parser.recognize(state)
+
+                if trialState is not None:
                     if state != trialState:
                         state = trialState.popState()
                     bestState = state
                     break
-                except ParseError:
-                    continue
         return bestState
 
     def __or__(self, right:Parseable) -> Parseable:
@@ -263,38 +277,78 @@ class Repeat(Combinator):
         self.separator = None if separator is None else asCombinator(separator)
         self._hash = hash(hash(self.subparser)+hash(self.minimum)+hash(self.maximum))
 
+        self._sepParse = None if self.separator is None \
+            else self.sepParse if self.separator.compound \
+            else self.sepRecognize
+        self._subParse = self.subParse if self.subparser.compound else self.subRecognize
+
     def expect(self, state:Expect) -> List[str]:
         return self.subparser.expectCore(state)
 
-    def recognize(self, state:State) -> Optional[State]:
+    def sepParse(self, state:State) -> State|None:
+        """ Parse seperator with parseCore """
+        try:
+            return cast(Combinator, self.separator).parseCore(state)
+        except ParseError:
+            return None
+
+    def sepRecognize(self, state:State) -> State|None:
+        """ Parse separator with recognize """
+        return cast(Combinator, self.separator).recognize(state)
+
+    def subParse(self, state:State) -> State|None:
+        """ Parse subparser with parseCore """
+        try:
+            return self.subparser.parseCore(state)
+        except ParseError:
+            return None
+
+    def subRecognize(self, state:State) -> State|None:
+        """ Parse subparser with recognize """
+        return self.subparser.recognize(state)
+
+    def recognizeOne(self, state:State, parsed:int) -> State|None:
+        """ Recognize a seperator + subparser set """
+        if parsed > 0 and self._sepParse:
+            newState = self._sepParse(state)
+
+            if newState is None:
+                return None
+            state = newState
+
+        return self._subParse(state)
+
+    def recognize(self, state:State) -> State|None:
         parsed = 0
 
         while parsed < self.minimum:
-            if parsed > 0 and self.separator:
-                state = self.separator.parseCore(state)
-            state = self.subparser.parseCore(state)
+            newState = self.recognizeOne(state, parsed)
+
+            if newState is None:
+                return None
+
+            state = newState
             parsed += 1
 
         if self.maximum is not None:
             while parsed < self.maximum:
-                try:
-                    mustPop = self.subparser.compound or self.separator and self.separator.compound
-                    if mustPop:
-                        trialState = state.pushState()
-                    else:
-                        trialState = state
+                mustPop = self.subparser.compound or self.separator and self.separator.compound
+                if mustPop:
+                    trialState = state.pushState()
+                else:
+                    trialState = state
 
-                    if parsed > 0 and self.separator:
-                        trialState = self.separator.parseCore(trialState)
+                newState = self.recognizeOne(trialState, parsed)
 
-                    state = self.subparser.parseCore(trialState)
-
-                    if mustPop:
-                        state = state.popState()
-
-                    parsed += 1
-                except ParseError:
+                if newState is None:
                     break
+
+                state = newState
+
+                if mustPop:
+                    state = state.popState()
+
+                parsed += 1
 
         return state
 
