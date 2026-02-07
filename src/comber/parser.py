@@ -290,7 +290,7 @@ class Parser:
             newState.popParser(self)
 
         if self.emit is not None:
-            value = self.emit(newState.popBranch())
+            value = self.emit(*newState.popBranch())
             newState.pushLeaf(value)
 
         return newState

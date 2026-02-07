@@ -43,21 +43,21 @@ def test_name():
 
 def test_emit():
     class Eval:
-        def __init__(self, args):
+        def __init__(self, *args):
             self.args = args
     parser = (C + 'foo' + 'bar')@('baz', Eval)
     assert parser.name == 'baz'
     assert parser.emit == Eval
     state = parser('foobar')
     value = state.tree[0]
-    assert value.args == ['foo', 'bar']
+    assert value.args == ('foo', 'bar')
 
     parser = (C + 'foo' + 'bar')@Eval
     assert parser.name is None
     assert parser.emit == Eval
     state = parser('foobar')
     value = state.tree[0]
-    assert value.args == ['foo', 'bar']
+    assert value.args == ('foo', 'bar')
 
 def test_optional():
     parser = ~Lit('foo')

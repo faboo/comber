@@ -27,7 +27,8 @@ Repository = "https://github.com/faboo/comber.git"
 
 [project.optional-dependencies]
 dev = [
-    "tox"
+    "tox",
+    "mypy[mypyc]"
 ]
 
 [tool.setuptools]
