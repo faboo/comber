@@ -1,6 +1,6 @@
 [project]
 name = "comber"
-version = "1.1.0"
+version = "1.1.1"
 authors = [
     { name="Ray Wallace III", email="rwallace3@proton.me" },
 ]
@@ -27,9 +27,12 @@ Repository = "https://github.com/faboo/comber.git"
 
 [project.optional-dependencies]
 dev = [
-    "tox",
-    "mypy[mypyc]"
-]
+      "tox"
+    , "mypy[mypyc]"
+    , "pylintrc"
+    , "pytest"
+    , "pytest-cov"
+    ]
 
 [tool.setuptools]
 [tool.setuptools.package-data]

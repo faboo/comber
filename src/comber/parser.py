@@ -56,6 +56,11 @@ class State:
         self._parent:State|None = None
 
     @property
+    def result(self) -> Any:
+        """ The parser result """
+        return self._tree[0][0]
+
+    @property
     def tree(self) -> list:
         """
         The current parse tree

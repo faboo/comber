@@ -25,4 +25,19 @@ def test_parse():
     with pytest.raises(ParseError):
         parser('123')
 
+def test_emit():
+    def emitter(string):
+        nonlocal called
+        called = True
+        return string
+    called = False
+    parser = rs('foo')@emitter
+    
+    parser('foo')
+    assert called
 
+    called = False
+    parser = (rs('foo')@emitter)[0, 2]
+    
+    parser('foo')
+    assert called

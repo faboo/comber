@@ -280,7 +280,9 @@ class Repeat(Combinator):
         self._sepParse = None if self.separator is None \
             else self.sepParse if self.separator.compound \
             else self.sepRecognize
-        self._subParse = self.subParse if self.subparser.compound else self.subRecognize
+        self._subParse = self.subParse \
+            if self.subparser.compound or self.subparser.emit or self.subparser.name \
+            else self.subRecognize
 
     def expect(self, state:Expect) -> List[str]:
         return self.subparser.expectCore(state)

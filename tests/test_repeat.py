@@ -111,3 +111,20 @@ def test_parse_bracketed_seperated():
     state = parser('[ foo, foo ]')
     assert state.text == ''
     assert state.tree == ['[', 'foo', ',', 'foo', ']']
+
+def test_emit():
+    def emitter(string):
+        nonlocal called
+        called = True
+        return string
+    called = False
+    parser = ((C+'foo')@emitter)[1, 2]
+    
+    parser('foo')
+    assert called
+
+    called = False
+    parser = ((C+'foo')@('emit', emitter))[1, 2]
+    
+    parser('foo')
+    assert called
