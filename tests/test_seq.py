@@ -34,3 +34,7 @@ def test_parse_seq_dont_skip():
     with pytest.raises(ParseError):
         parser('bar')
 
+def test_parse_seq_emit():
+    parser = Seq(Lit('1')@(int), Lit('2')@(int))
+
+    assert parser('1 2').tree == [1, 2]

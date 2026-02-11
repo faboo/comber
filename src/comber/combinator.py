@@ -14,6 +14,7 @@ class Combinator(Parser, ABC):
     Combinator definitions.
     """
     def __matmul__(self, arg:Union[str, Emitter, Tuple[str, Emitter]]) -> 'Combinator':
+        self.compound = True
         if isinstance(arg, str):
             self.name = arg
         elif callable(arg):
@@ -281,7 +282,7 @@ class Repeat(Combinator):
             else self.sepParse if self.separator.compound \
             else self.sepRecognize
         self._subParse = self.subParse \
-            if self.subparser.compound or self.subparser.emit or self.subparser.name \
+            if self.subparser.compound \
             else self.subRecognize
 
     def expect(self, state:Expect) -> List[str]:
